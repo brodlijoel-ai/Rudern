@@ -1,187 +1,491 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elite Trainingsplan System</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
-body{margin:0;font-family:Arial;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white}
-.container{max-width:1200px;margin:auto;padding:20px}
-.card{background:rgba(255,255,255,0.1);padding:15px;border-radius:12px;margin-bottom:15px}
-input,select,textarea,button{margin:5px;padding:8px;border-radius:6px;border:none}
-button{background:#00c6ff;color:white;cursor:pointer}
-.child{border:1px solid rgba(255,255,255,0.2);padding:10px;border-radius:10px}
-#output{background:white;color:black;padding:20px;border-radius:10px}
-#chat{background:black;color:#0f0;height:220px;overflow:auto;padding:10px}
-.fade{animation:fade 0.8s}
-@keyframes fade{from{opacity:0}to{opacity:1}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EliteRow Planner | Profi-Trainingsmanagement</title>
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Libraries for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --bg-dark: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc;
+            --accent: #f43f5e;
+            --success: #10b981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top left, #1e293b, #0f172a);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Layout --- */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar --- */
+        aside {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--glass-border);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        nav ul { list-style: none; }
+        nav li {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+        }
+        nav li:hover, nav li.active {
+            background: var(--glass);
+            color: var(--primary);
+        }
+
+        /* --- Content Area --- */
+        main {
+            padding: 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* --- Cards --- */
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 1.8rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 { font-size: 1.8rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 15px; }
+        h3 { font-size: 1.1rem; margin-bottom: 1rem; color: #cbd5e1; }
+
+        /* --- Widgets --- */
+        .env-widget { display: flex; justify-content: space-between; align-items: center; }
+        .env-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .env-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
+
+        /* --- Forms & Buttons --- */
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: #94a3b8; }
+        input, select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            padding: 0.9rem;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+        }
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 14px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
+        .btn-secondary { background: var(--glass); border: 1px solid var(--glass-border); color: white; }
+
+        /* --- Training Plan Styling --- */
+        #plan-content { color: #e2e8f0; }
+        .group-box {
+            background: rgba(255,255,255,0.03);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+        }
+        .phase-badge {
+            background: var(--secondary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 1000px) {
+            .app-container { grid-template-columns: 1fr; }
+            aside { display: none; }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<h1>🚣‍♂️ Elite Trainingssystem</h1>
 
-<div class="card">
-<h3>🌍 Wetter & Entscheidung</h3>
-<div id="weather">Lade...</div>
-<div id="recommendation"></div>
+<div class="app-container">
+    <!-- SIDEBAR -->
+    <aside>
+        <div class="logo"><i class="fas fa-fist-raised"></i> ELITEROW</div>
+        <nav>
+            <ul>
+                <li class="active" onclick="showSection('dashboard')"><i class="fas fa-th-large"></i> Dashboard</li>
+                <li onclick="showSection('kids')"><i class="fas fa-user-friends"></i> Kinder-Kader</li>
+                <li onclick="showSection('planner')"><i class="fas fa-clipboard-list"></i> Trainingsplan</li>
+            </ul>
+        </nav>
+        
+        <div class="card" style="margin-top: auto; padding: 1.2rem;">
+            <div class="env-label">Bremerhaven Tide</div>
+            <div id="side-tide" style="font-weight: bold; color: var(--primary);">Lade...</div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+        <!-- DASHBOARD -->
+        <section id="dashboard-section">
+            <h2><i class="fas fa-chart-line"></i> Status-Zentrale</h2>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="env-label">Aktuelles Wetter (Live)</div>
+                    <div class="env-widget">
+                        <div id="weather-temp" class="env-value">--°C</div>
+                        <i id="weather-icon" class="fas fa-cloud-sun fa-3x" style="color: var(--secondary);"></i>
+                    </div>
+                    <p id="weather-desc" style="margin: 10px 0;">Wetterdaten werden abgerufen...</p>
+                    <div id="location-tip" style="padding: 10px; border-radius: 8px; font-weight: 600; text-align: center;"></div>
+                </div>
+
+                <div class="card">
+                    <div class="env-label">Windstärke</div>
+                    <div id="wind-speed" class="env-value">-- km/h</div>
+                    <p id="wind-advice" class="env-label" style="margin-top:10px;">Checke Bedingungen...</p>
+                </div>
+
+                <div class="card">
+                    <div class="env-label">Gezeiten (Simulation)</div>
+                    <div id="tide-status" class="env-value">--</div>
+                    <p id="tide-times" class="env-label">Bremerhaven Revier</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fab fa-youtube"></i> Technik-Video des Tages</h3>
+                <div style="aspect-ratio: 16/9; margin-top: 1rem;">
+                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/zQ_A6_uD6_8" frameborder="0" allowfullscreen style="border-radius: 15px;"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- KIDS MANAGEMENT -->
+        <section id="kids-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2><i class="fas fa-users"></i> Kader-Verwaltung</h2>
+                <button class="btn" onclick="openModal()"><i class="fas fa-plus"></i> Kind registrieren</button>
+            </div>
+            
+            <div id="kids-list" class="dashboard-grid">
+                <!-- Dynamisch -->
+            </div>
+        </section>
+
+        <!-- PLAN GENERATOR -->
+        <section id="planner-section" style="display: none;">
+            <h2><i class="fas fa-magic"></i> Plan-Generator</h2>
+            <div class="card">
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>Saison-Ziel / Nächster Wettkampf</label>
+                        <input type="date" id="comp-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Fokus</label>
+                        <select id="manual-focus">
+                            <option value="auto">Automatisch nach Phase</option>
+                            <option value="Technik">Technik-Schwerpunkt</option>
+                            <option value="Kraft">Kraft / Ausdauer</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="generatePlan()"><i class="fas fa-sync"></i> Plan berechnen</button>
+                    <button class="btn btn-secondary" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> PDF Export</button>
+                </div>
+            </div>
+
+            <div id="plan-container" class="card" style="margin-top: 2rem; display: none; background: white; color: #333;">
+                <div id="plan-content" style="padding: 20px;">
+                    <!-- Plan wird hier generiert -->
+                </div>
+            </div>
+        </section>
+    </main>
 </div>
 
-<div class="card">
-<h3>🌊 Gezeiten Bremerhaven</h3>
-<div id="tide">Lade...</div>
-</div>
-
-<div class="card">
-<label>📅 Wettkampfdatum:</label>
-<input type="date" id="competitionDate">
-</div>
-
-<div class="card">
-<h3>👥 Kinder</h3>
-<div id="children"></div>
-<button onclick="addChild()">+ Kind</button>
-</div>
-
-<button onclick="generatePlan()">🔥 Plan generieren</button>
-<button onclick="downloadPDF()">📄 PDF</button>
-
-<div id="output"></div>
-
-<div class="card">
-<h3>🤖 KI Trainer</h3>
-<input type="password" id="apiKey" placeholder="Gemini API Key">
-<textarea id="prompt" placeholder="Frage stellen..."></textarea>
-<button onclick="askAI()">Senden</button>
-<div id="chat"></div>
-</div>
+<!-- MODAL -->
+<div id="kid-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+    <div class="card" style="width: 100%; max-width: 450px; background: #1e293b;">
+        <h3 style="color: white;">Neues Talent anlegen</h3>
+        <div class="form-group">
+            <label>Vollständiger Name</label>
+            <input type="text" id="kid-name" placeholder="z. B. Max Mustermann">
+        </div>
+        <div class="form-group">
+            <label>Erfahrungslevel</label>
+            <select id="kid-level">
+                <option value="1">Anfänger (Keine Erfahrung)</option>
+                <option value="2">Fortgeschritten (Sicher im Boot)</option>
+                <option value="3">Leistung (Wettkampforientiert)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Nimmt an Wettkämpfen teil?</label>
+            <select id="kid-comp">
+                <option value="ja">Ja, aktiv</option>
+                <option value="nein">Nein, Breitensport</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" style="flex:1" onclick="saveKid()">Speichern</button>
+            <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Abbrechen</button>
+        </div>
+    </div>
 </div>
 
 <script>
-let childCount=0;let weatherData={};
+    // --- STATE MANAGEMENT ---
+    let state = {
+        kids: JSON.parse(localStorage.getItem('eliterow_kids')) || [],
+        weather: { temp: 0, wind: 0, rain: 0 },
+        tides: { status: 'Ebbe', next: '12:00' }
+    };
 
-navigator.geolocation.getCurrentPosition(pos=>{
- const lat=pos.coords.latitude;const lon=pos.coords.longitude;
- fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
- .then(r=>r.json()).then(d=>{
- weatherData=d.current_weather;
- document.getElementById('weather').innerHTML=`Temp: ${d.current_weather.temperature}°C | Wind: ${d.current_weather.windspeed} km/h`;
- let rec=(d.current_weather.windspeed>20)?"❌ Halle empfohlen":"✅ Wasser möglich";
- document.getElementById('recommendation').innerHTML=rec;
- });
-});
+    // --- INIT ---
+    window.onload = () => {
+        fetchWeather();
+        calcTides();
+        renderKids();
+    };
 
-function loadTides(){
- fetch("https://api.tidesapi.com/api/tides?port=Bremerhaven")
- .then(r=>r.json()).then(d=>{
- document.getElementById('tide').innerHTML=JSON.stringify(d);
- }).catch(()=>{
- document.getElementById('tide').innerHTML="Ebbe 08:30 | Flut 14:45";
- });
-}
-loadTides();
+    // --- NAVIGATION ---
+    function showSection(id) {
+        document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
+        document.getElementById(id + '-section').style.display = 'block';
+        document.querySelectorAll('nav li').forEach(li => li.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
 
-function addChild(){
- childCount++;
- let d=document.createElement('div');d.className='child fade';
- d.innerHTML=`
- <input placeholder="Name" id="name${childCount}">
- <select id="comp${childCount}"><option value="ja">Wettkampf</option><option value="nein">Kein Wettkampf</option></select>
- <select id="place${childCount}"><option value="wasser">Wasser</option><option value="halle">Halle</option></select>
- <select id="exp${childCount}">
- <option value="keine">Keine</option>
- <option value="wenig">Wenig</option>
- <option value="mittel">Mittel</option>
- <option value="viel">Viel</option>
- </select>`;
- document.getElementById('children').appendChild(d);
-}
+    // --- WEATHER API ---
+    async function fetchWeather() {
+        try {
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.552342&longitude=8.59156&current=temperature_2m,rain,wind_speed_10m&timezone=Europe%2FBerlin');
+            const data = await res.json();
+            state.weather = {
+                temp: data.current.temperature_2m,
+                wind: data.current.wind_speed_10m,
+                rain: data.current.rain
+            };
+            updateWeatherUI();
+        } catch (e) {
+            console.error("Wetter konnte nicht geladen werden.");
+        }
+    }
 
-function getPhase(days){
- if(days<3) return "Peak";
- if(days<10) return "Wettkampfphase";
- if(days<30) return "Aufbau";
- return "Grundlage";
-}
+    function updateWeatherUI() {
+        document.getElementById('weather-temp').innerText = `${state.weather.temp}°C`;
+        document.getElementById('wind-speed').innerText = `${state.weather.wind} km/h`;
+        
+        const tip = document.getElementById('location-tip');
+        const advice = document.getElementById('wind-advice');
 
-function generatePlan(){
- let compDate=document.getElementById('competitionDate').value;
- let today=new Date();let comp=new Date(compDate);
- let diff=(comp-today)/(1000*60*60*24);
- let phase=getPhase(diff);
+        if(state.weather.wind > 22 || state.weather.rain > 0.5) {
+            tip.innerText = "EMPFEHLUNG: HALLE / ERGO";
+            tip.style.background = "var(--accent)";
+            advice.innerText = "Zu windig oder nass für Kinder auf dem Wasser.";
+        } else {
+            tip.innerText = "BEDINGUNGEN: WASSERTRAINING";
+            tip.style.background = "var(--success)";
+            advice.innerText = "Gute Bedingungen für die Wassereinheit.";
+        }
+        document.getElementById('weather-desc').innerText = `Wind: ${state.weather.wind} km/h | Regen: ${state.weather.rain}mm`;
+    }
 
- let groups={};
- for(let i=1;i<=childCount;i++){
- let name=document.getElementById(`name${i}`).value;if(!name)continue;
- let comp=document.getElementById(`comp${i}`).value;
- let place=document.getElementById(`place${i}`).value;
- let exp=document.getElementById(`exp${i}`).value;
- let key=comp+place+exp;
- if(!groups[key])groups[key]=[];
- groups[key].push(name);
- }
+    // --- TIDES (Bremerhaven) ---
+    function calcTides() {
+        const now = new Date();
+        const cycle = (now.getHours() % 12);
+        const isHigh = cycle < 6;
+        state.tides.status = isHigh ? "FLUT 🌊" : "EBBE 🏖️";
+        
+        document.getElementById('tide-status').innerText = state.tides.status;
+        document.getElementById('side-tide').innerText = state.tides.status;
+    }
 
- let plan=`<h2>Trainingsplan (90min)</h2>`;
- plan+=`<p>Phase: ${phase}</p>`;
- plan+=`<p>Wetter: ${weatherData.temperature||'?'}°C / Wind ${weatherData.windspeed||'?'} km/h</p>`;
+    // --- KIDS CRUD ---
+    function openModal() { document.getElementById('kid-modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('kid-modal').style.display = 'none'; }
 
- for(let key in groups){
- plan+=`<hr><h3>${groups[key].join(', ')}</h3>`;
- let exp=key.includes('viel')?"fortgeschritten":key.includes('mittel')?"mittel":"anfänger";
- let comp=key.includes('ja');
- let place=key.includes('halle')?"halle":"wasser";
+    function saveKid() {
+        const name = document.getElementById('kid-name').value;
+        const level = document.getElementById('kid-level').value;
+        const comp = document.getElementById('kid-comp').value;
 
- plan+=`<b>${place.toUpperCase()} | ${exp} | ${comp?"Wettkampf":"kein Wettkampf"}</b>`;
+        if(!name) return;
+        state.kids.push({ id: Date.now(), name, level, comp });
+        localStorage.setItem('eliterow_kids', JSON.stringify(state.kids));
+        renderKids();
+        closeModal();
+    }
 
- plan+=`<ul>`;
- plan+=`<li>Begrüßung + Einteilung</li>`;
- plan+=`<li>Warmup: Lauf + Mobility + Dehnen</li>`;
+    function deleteKid(id) {
+        state.kids = state.kids.filter(k => k.id !== id);
+        localStorage.setItem('eliterow_kids', JSON.stringify(state.kids));
+        renderKids();
+    }
 
- if(place==='wasser'){
- plan+=`<li>Boote tragen + einsetzen</li>`;
- plan+=`<li>${waterLogic(exp,phase,comp)}</li>`;
- } else {
- plan+=`<li>Ergo einstellen</li>`;
- plan+=`<li>${hallLogic(exp,phase,comp)}</li>`;
- }
+    function renderKids() {
+        const container = document.getElementById('kids-list');
+        container.innerHTML = state.kids.map(k => `
+            <div class="card">
+                <div style="font-weight: 800; font-size: 1.2rem; margin-bottom: 5px;">${k.name}</div>
+                <div class="env-label">Level ${k.level} | Wettkampf: ${k.comp}</div>
+                <button class="btn btn-secondary" onclick="deleteKid(${k.id})" style="margin-top: 15px; padding: 5px 12px; font-size: 0.8rem;">Entfernen</button>
+            </div>
+        `).join('');
+    }
 
- plan+=`<li>Cool Down + Stretch</li>`;
- plan+=`</ul>`;
- }
+    // --- GENERATOR LOGIC ---
+    function generatePlan() {
+        if(state.kids.length === 0) return alert("Lege zuerst Kinder im Kader an.");
+        
+        const compDate = document.getElementById('comp-date').value;
+        let phase = "Grundlage";
+        if(compDate) {
+            const diff = (new Date(compDate) - new Date()) / (1000*60*60*24);
+            if(diff < 14) phase = "Peak (Tapering)";
+            else if(diff < 40) phase = "Wettkampf-Vorbereitung";
+        }
 
- document.getElementById('output').innerHTML=plan;
-}
+        const isWater = state.weather.wind <= 22 && state.weather.rain < 0.5;
+        const groups = {
+            beginners: state.kids.filter(k => k.level == 1),
+            advanced: state.kids.filter(k => k.level > 1)
+        };
 
-function waterLogic(exp,phase,comp){
- if(exp==='anfänger') return "Balanceübungen + Technik + ruhiges Rudern";
- if(exp==='mittel') return "Technik + Intervalle + Rhythmus";
- return comp?"Starts + Renntempo + Intervalle":"Langstrecke + Technikfeinschliff";
-}
+        let html = `
+            <div style="color: #1e293b">
+                <h1 style="border-bottom: 2px solid #3a7bd5; padding-bottom: 10px;">Trainingsplan: ${new Date().toLocaleDateString()}</h1>
+                <p><strong>Bedingungen:</strong> ${isWater ? 'Wasser' : 'Halle (Wetterbedingt)'} | <strong>Phase:</strong> ${phase}</p>
+                <br>
+                ${renderPhaseGroup("Gruppe 1: Einsteiger", groups.beginners, isWater, phase)}
+                ${renderPhaseGroup("Gruppe 2: Fortgeschrittene", groups.advanced, isWater, phase)}
+            </div>
+        `;
 
-function hallLogic(exp,phase,comp){
- if(exp==='anfänger') return "Leichtes Ergo + Koordination";
- if(exp==='mittel') return "Ergo Intervalle + Technik";
- return comp?"Max Intervalle + Kraftzirkel":"Grundlagen + Kraft";
-}
+        const out = document.getElementById('plan-content');
+        out.innerHTML = html;
+        document.getElementById('plan-container').style.display = 'block';
+    }
 
-function downloadPDF(){
- html2pdf().from(document.getElementById('output')).save();
-}
+    function renderPhaseGroup(title, kids, isWater, phase) {
+        if(kids.length === 0) return "";
+        
+        const exercises = isWater ? getWaterExercises(phase) : getHallExercises(phase);
 
-async function askAI(){
- let key=document.getElementById('apiKey').value;
- let prompt=document.getElementById('prompt').value;
- let chat=document.getElementById('chat');
- chat.innerHTML+=`> ${prompt}<br>`;
+        return `
+            <div class="group-box" style="color: #333; background: #f1f5f9; margin-bottom: 20px; border-radius: 12px; padding: 20px;">
+                <h2 style="color: #3a7bd5; font-size: 1.2rem; margin-bottom: 5px;">${title}</h2>
+                <p><em>Teilnehmer: ${kids.map(k => k.name).join(', ')}</em></p>
+                <hr style="margin: 10px 0;">
+                <p><strong>1. Warm-up (20 Min):</strong> ${exercises.warmup}</p>
+                <p><strong>2. Hauptteil (50 Min):</strong> ${exercises.main}</p>
+                <p><strong>3. Cool-down (20 Min):</strong> ${exercises.cooldown}</p>
+                <p style="margin-top:10px; color: #64748b; font-size: 0.9rem;"><strong>Coach-Tipp:</strong> ${exercises.tip}</p>
+            </div>
+        `;
+    }
 
- let res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`,
- {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
- let data=await res.json();
- let reply=data.candidates?.[0]?.content?.parts?.[0]?.text||"Fehler";
- chat.innerHTML+=reply+"<br><br>";
- chat.scrollTop=chat.scrollHeight;
-}
+    function getWaterExercises(phase) {
+        return {
+            warmup: "Locker rudern, Fokus auf die Händeführung über den Knien. 2x 1000m.",
+            main: phase.includes("Wettkampf") ? "Starts üben (10/10/10) + 3x 500m Power-Intervalle." : "Technik: Einblatt-Rudern, Fokus auf sauberen Druckpunkt und Rollsitz-Kontrolle.",
+            cooldown: "Auslockern, gemeinsames Bootreinigen, kurzes Feedback-Gespräch.",
+            tip: "Achte bei den Kindern auf die Griffhaltung. Die Daumen müssen am Ende des Griffs sein."
+        };
+    }
+
+    function getHallExercises(phase) {
+        return {
+            warmup: "Laufen (10 Min) + Dynamisches Dehnen & Mobilisation der Wirbelsäule.",
+            main: "Ergo-Pyramide (1-2-3-2-1 Min) bei Schlagfrequenz 22-24. Dazwischen Stabi-Übungen (Plank, Unterarmstütz).",
+            cooldown: "Locker ausrudern (Ergo) und intensives Stretching der Beinrückseiten.",
+            tip: "In der Halle die Zeit nutzen, um die exakte Körperposition (Vorbereiten der Arme) am Ergo zu korrigieren."
+        };
+    }
+
+    // --- PDF EXPORT ---
+    async function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'pt', 'a4');
+        const element = document.getElementById('plan-content');
+
+        await html2canvas(element, { scale: 2 });
+        doc.html(element, {
+            callback: function(doc) { doc.save(`Ruderplan_${new Date().toISOString().slice(0,10)}.pdf`); },
+            x: 40, y: 40, width: 520, windowWidth: 800
+        });
+    }
 </script>
+
 </body>
 </html>
