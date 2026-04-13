@@ -7,56 +7,38 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Geeste Ruder Coach</title>
     <style>
-        :root { --blue: #007AFF; --dark: #1C1C1E; --light: #F2F2F7; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: var(--light); 
-            margin: 0; 
-            padding: 20px; 
-            padding-top: 60px; 
+        :root { --blue: #007AFF; --dark: #1C1C1E; --light: #F2F2F7; --orange: #FF9500; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--light); margin: 0; padding: 20px; padding-top: 50px; }
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h1 { font-size: 26px; font-weight: 800; margin-bottom: 20px; text-align: center; }
+        h2 { font-size: 13px; color: #8E8E93; margin: 0 0 10px 0; text-transform: uppercase; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; color: #444; }
+        
+        input, select { 
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; 
+            font-size: 16px; background: #fff; box-sizing: border-box;
         }
-        .card { 
-            background: white; 
-            border-radius: 20px; 
-            padding: 20px; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
-            margin-bottom: 20px; 
+        
+        .btn-main { 
+            width: 100%; padding: 18px; border-radius: 15px; border: none; 
+            background: var(--blue); color: white; font-size: 18px; font-weight: 700; 
+            margin-top: 10px; cursor: pointer; -webkit-appearance: none;
         }
-        h1 { font-size: 28px; font-weight: 800; margin-bottom: 20px; color: var(--dark); }
-        h2 { font-size: 14px; color: #8E8E93; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px; }
-        .data { font-size: 24px; font-weight: 700; color: var(--blue); }
-        select { 
-            width: 100%; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid #ddd; 
-            font-size: 17px; 
-            margin-top: 10px;
-            background-color: #fff;
+        
+        .btn-auto { 
+            background: none; color: var(--blue); border: 1px solid var(--blue); 
+            padding: 8px; border-radius: 8px; font-size: 12px; margin-top: 5px; width: auto;
         }
-        button { 
-            width: 100%; 
-            padding: 18px; 
-            border-radius: 12px; 
-            border: none; 
-            font-size: 18px; 
-            margin-top: 15px; 
-            background: var(--blue); 
-            color: white; 
-            font-weight: 600; 
-            cursor: pointer; 
-            -webkit-appearance: none;
+
+        .result-box { 
+            display: none; background: #fff; border-radius: 20px; padding: 20px; 
+            border: 2px solid var(--blue); margin-top: 10px;
         }
-        .rec-box { 
-            background: #E5F1FF; 
-            border-left: 5px solid var(--blue); 
-            padding: 15px; 
-            border-radius: 0 12px 12px 0; 
-            line-height: 1.5;
-        }
-        .warmup-item { display: flex; align-items: center; margin-bottom: 12px; font-size: 16px; }
-        .dot { height: 10px; width: 10px; background: var(--blue); border-radius: 50%; margin-right: 12px; flex-shrink: 0; }
-        #status-msg { font-size: 14px; color: #666; margin-top: 5px; }
+        
+        .warning { color: #FF3B30; font-weight: 700; display: none; margin-bottom: 10px; }
+        .highlight { color: var(--blue); font-weight: 700; }
     </style>
 </head>
 <body>
@@ -64,92 +46,99 @@
     <h1>🚣‍♂️ Geeste Coach</h1>
 
     <div class="card">
-        <h2>Aktuelles Wetter (Bremerhaven)</h2>
-        <div id="weather" class="data">Lade Daten...</div>
-        <div id="status-msg">Wird aktualisiert...</div>
-    </div>
-
-    <div class="card">
-        <h2>Gezeiten auf der Geeste</h2>
-        <select id="tide">
-            <option value="flut">Flut (Strömung landeinwärts)</option>
-            <option value="ebbe">Ebbe (Strömung seewärts)</option>
-            <option value="hoch">Hochwasser (Stillstand)</option>
-            <option value="niedrig">Niedrigwasser (Vorsicht)</option>
-        </select>
-        <button onclick="getPlan()">Trainingsplan erstellen</button>
-    </div>
-
-    <div id="result" class="card" style="display:none;">
-        <h2>Dein Training heute</h2>
-        <div id="plan" class="rec-box"></div>
+        <h2>Wetter & Wind einstellen</h2>
         
-        <h2 style="margin-top:25px;">Vorgehen: Warm-Up</h2>
-        <div class="warmup-item"><div class="dot"></div> 5 Min. Locker einrudern (Oberkörper)</div>
-        <div class="warmup-item"><div class="dot"></div> Dynamisches Dehnen der Schultern</div>
-        <div class="warmup-item"><div class="dot"></div> 10 Kniebeugen am Steg</div>
-        <div class="warmup-item"><div class="dot"></div> Fokus: Sauberes Blattsetzen</div>
+        <div class="input-group">
+            <label>Temperatur (°C)</label>
+            <input type="number" id="manual-temp" value="15">
+        </div>
+
+        <div class="input-group">
+            <label>Windgeschwindigkeit (km/h)</label>
+            <input type="number" id="manual-wind" value="10">
+        </div>
+
+        <div class="input-group">
+            <label>Gezeiten-Zustand</label>
+            <select id="manual-tide">
+                <option value="flut">Flut (Strömung landeinwärts)</option>
+                <option value="ebbe">Ebbe (Strömung seewärts)</option>
+                <option value="hoch">Hochwasser (Stillstand)</option>
+                <option value="niedrig">Niedrigwasser (Vorsicht Schlick)</option>
+            </select>
+        </div>
+
+        <button class="btn-auto" onclick="fetchAutoWeather()">Aktuelle Live-Daten laden</button>
+    </div>
+
+    <button class="btn-main" onclick="generateTraining()">Training berechnen</button>
+
+    <div id="result" class="result-box">
+        <div id="wind-warning" class="warning">⚠️ STARKWIND-WARNUNG!</div>
+        <h3 id="plan-title">Dein Plan</h3>
+        <p id="plan-text"></p>
+        <hr>
+        <p><strong>Vorgehen:</strong><br>
+        1. 5 Min. Mobilisation am Steg<br>
+        2. Dehnen: Schultern & unterer Rücken<br>
+        3. Wasserarbeit laut Plan</p>
     </div>
 
     <script>
-        // Funktion zum Abrufen der Wetterdaten
-        async function fetchWeather() {
-            const weatherDiv = document.getElementById('weather');
-            const statusMsg = document.getElementById('status-msg');
-            
+        // Wetter automatisch laden (als Startwert)
+        async function fetchAutoWeather() {
             try {
-                // Open-Meteo API für Bremerhaven
-                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.54&longitude=8.58&current_weather=true');
-                
-                if (!response.ok) throw new Error('Netzwerk-Fehler');
-                
-                const data = await response.json();
-                const w = data.current_weather;
-                
-                weatherDiv.innerHTML = `${w.temperature}°C | ${w.windspeed} km/h Wind`;
-                statusMsg.innerHTML = "Daten live von der Mündung";
-                
-                // Warnung bei zu viel Wind
-                if(w.windspeed > 25) {
-                    weatherDiv.style.color = "#FF3B30";
-                    statusMsg.innerHTML = "⚠️ Achtung: Starkwind!";
-                }
-            } catch (error) {
-                weatherDiv.innerHTML = "-- °C";
-                statusMsg.innerHTML = "Fehler beim Laden (Internet prüfen)";
-                console.error('Wetter-Fehler:', error);
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.54&longitude=8.58&current_weather=true');
+                const data = await res.json();
+                document.getElementById('manual-temp').value = Math.round(data.current_weather.temperature);
+                document.getElementById('manual-wind').value = Math.round(data.current_weather.windspeed);
+                alert("Live-Daten für Bremerhaven geladen!");
+            } catch (e) {
+                alert("Fehler beim Laden der Live-Daten.");
             }
         }
 
-        // Funktion für die Trainingsempfehlung
-        function getPlan() {
-            const t = document.getElementById('tide').value;
-            const resDiv = document.getElementById('result');
-            const planDiv = document.getElementById('plan');
+        function generateTraining() {
+            const temp = document.getElementById('manual-temp').value;
+            const wind = document.getElementById('manual-wind').value;
+            const tide = document.getElementById('manual-tide').value;
             
+            const resDiv = document.getElementById('result');
+            const warning = document.getElementById('wind-warning');
+            const title = document.getElementById('plan-title');
+            const text = document.getElementById('plan-text');
+
             resDiv.style.display = "block";
 
-            let tipp = "";
-            if(t === "flut") {
-                tipp = "<b>Kraft-Ausdauer:</b> Du ruderst gegen die Flut landeinwärts. Nutze den Widerstand für kräftige Schläge. Fokus auf Beinarbeit!";
-            } else if(t === "ebbe") {
-                tipp = "<b>Technik & Speed:</b> Der Strom schiebt dich raus. Konzentriere dich auf blitzschnelles Wasserfassen und langes Rollen.";
-            } else if(t === "hoch") {
-                tipp = "<b>Intervalle/Sprints:</b> Ideales Flachwasser bei Stillstand. Perfekt für 500m Sprints oder Zeitfahren.";
-            } else if(t === "niedrig") {
-                tipp = "<b>Lockerer Paddel:</b> Vorsicht bei der Wende. Fokus auf Rhythmus und saubere Technik im flacheren Wasser.";
+            // Wind-Check
+            if (wind >= 25) {
+                warning.style.display = "block";
+                warning.innerText = `⚠️ Warnung: ${wind} km/h Wind! Wellen auf der Geeste beachten.`;
+            } else {
+                warning.style.display = "none";
             }
 
-            planDiv.innerHTML = tipp;
+            // Strategie-Logik
+            let plan = "";
+            if (tide === "flut") {
+                plan = `Bei Flut drückt das Wasser landeinwärts. <span class="highlight">Training: Kraft-Ausdauer.</span> Rudere gegen den Strom (Richtung Schiffdorf) für maximalen Widerstand.`;
+            } else if (tide === "ebbe") {
+                plan = `Ebbe zieht dich Richtung Mündung/Weser. <span class="highlight">Training: Technik & Frequenz.</span> Nutze den Schub für schnelle, saubere Schläge. Achte auf Treibgut!`;
+            } else if (tide === "hoch") {
+                plan = `<span class="highlight">Training: Belastung / Zeitfahren.</span> Das Wasser steht fast still. Perfekt um die 500m oder 1000m Zeit zu testen.`;
+            } else {
+                plan = `Niedrigwasser. <span class="highlight">Training: Lockeres Paddeln.</span> Achte auf die Fahrrinne und Steine am Rand. Fokus auf Rhythmusgefühl.`;
+            }
+
+            title.innerText = `Plan bei ${temp}°C und ${wind} km/h Wind`;
+            text.innerHTML = plan;
             
-            // Sanftes Scrollen zum Plan
-            setTimeout(() => {
-                resDiv.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            resDiv.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Beim Start Wetter laden
-        window.onload = fetchWeather;
+        // Beim ersten Laden einmal die echten Daten holen
+        window.onload = fetchAutoWeather;
     </script>
 </body>
 </html>
+
