@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EliteRow Pro | GPS, Tide & Team</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #00d2ff; --secondary: #3a7bd5; --bg-dark: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc; --accent: #f43f5e; --success: #10b981; --warning: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: #0f172a; color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+        .app-container { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+        /* Navigation */
+        aside { background: #070b14; border-right: 1px solid var(--glass-border); padding: 2rem; position: sticky; top: 0; height: 100vh; z-index: 1000; }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; }
+        nav li { list-style: none; padding: 12px; margin-bottom: 8px; border-radius: 10px; cursor: pointer; color: #64748b; transition: 0.3s; display: flex; align-items: center; gap: 12px; }
+        nav li.active { background: var(--glass); color: var(--primary); }
+
+        /* Layout */
+        main { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; backdrop-filter: blur(10px); }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+
+        /* Marine Styles */
+        .tide-card { background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9)); position: relative; }
+        .location-badge { background: rgba(0, 210, 255, 0.2); color: var(--primary); padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .tide-visual { height: 100px; background: rgba(0,0,0,0.3); border-radius: 15px; position: relative; margin: 15px 0; overflow: hidden; border: 1px solid var(--glass-border); }
+        .water-fill { position: absolute; bottom: 0; width: 100%; background: linear-gradient(0deg, var(--secondary), var(--primary)); transition: height 2s ease-in-out; }
+        .flow-indicator { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 12px; font-weight: 700; margin-bottom: 15px; }
+        .flow-up { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .flow-down { background: rgba(244, 63, 94, 0.15); color: var(--accent); }
+        .tide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-item { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; text-align: center; }
+
+        /* Kader & Planer Form Styles */
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        input, select { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px; color: white; flex: 1; min-width: 120px; }
+        .btn-add { background: var(--primary); color: var(--bg-dark); border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        
+        .list-item { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .delete-btn { color: var(--accent); cursor: pointer; border: none; background: none; padding: 5px; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .app-container { grid-template-columns: 1fr; }
+            aside { position: fixed; bottom: 0; height: 70px; width: 100%; padding: 0; }
+            nav ul { display: flex; justify-content: space-around; height: 100%; align-items: center; }
+            nav li { flex-direction: column; gap: 2px; font-size: 0.65rem; padding: 5px; margin: 0; }
+            .logo { display: none; }
+            main { padding: 1rem; padding-bottom: 90px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <aside>
+        <div class="logo"><i class="fas fa-water"></i> ELITEROW</div>
+        <nav>
+            <ul>
+                <li class="active" onclick="showSection('dashboard', this)"><i class="fas fa-home"></i><span>Dashboard</span></li>
+                <li onclick="showSection('kids', this)"><i class="fas fa-users"></i><span>Kader</span></li>
+                <li onclick="showSection('planner', this)"><i class="fas fa-calendar-alt"></i><span>Planer</span></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <!-- DASHBOARD -->
+        <section id="dashboard-section">
+            <h2>Live Status</h2>
+            <div class="dashboard-grid">
+                <div class="card tide-card">
+                    <div class="location-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="font-size: 1rem;">Gezeiten & GPS</h3>
+                        <div id="location-display" class="location-badge"><i class="fas fa-location-arrow"></i> <span>Ortet...</span></div>
+                    </div>
+                    <div class="tide-visual">
+                        <div id="tide-water" class="water-fill" style="height: 0%;"></div>
+                        <div style="position: absolute; width: 100%; top: 30px; text-align: center;">
+                            <span id="tide-perc" style="font-size: 1.5rem; font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,0.5);">--%</span>
+                            <div style="font-size: 0.6rem; opacity: 0.7; font-weight: 600;">PEGELSTAND</div>
+                        </div>
+                    </div>
+                    <div id="flow-indicator" class="flow-indicator flow-up">
+                        <i id="flow-icon" class="fas fa-sync-alt"></i><span id="flow-text">Berechne...</span>
+                    </div>
+                    <div class="tide-grid">
+                        <div class="stat-item"><div style="font-size:0.6rem; color:#94a3b8;">HW</div><div id="hw-time" style="font-weight:700;">--:--</div></div>
+                        <div class="stat-item"><div style="font-size:0.6rem; color:#94a3b8;">NW</div><div id="nw-time" style="font-weight:700;">--:--</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Wetter Lokal</h3>
+                    <div style="display: flex; align-items: center; gap: 20px; margin: 15px 0;">
+                        <div id="temp-display" style="font-size: 2.5rem; font-weight: 800;">--°</div>
+                        <div>
+                            <div id="wind-display" style="font-weight: 600; color: var(--primary);">-- km/h</div>
+                            <div id="rain-display" style="font-size: 0.8rem; color: #94a3b8;">Lade Wetter...</div>
+                        </div>
+                    </div>
+                    <div id="coords-display" style="font-size: 0.7rem; color: #64748b;">GPS: Warte...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KADER -->
+        <section id="kids-section" style="display:none;">
+            <h2>Kaderverwaltung</h2>
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="member-name" placeholder="Name">
+                    <input type="text" id="member-erg" placeholder="2k Zeit (z.B. 6:45)">
+                    <button class="btn-add" onclick="addMember()">Hinzufügen</button>
+                </div>
+                <div id="member-list">
+                    <!-- Kaderliste erscheint hier -->
+                </div>
+            </div>
+        </section>
+
+        <!-- PLANER -->
+        <section id="planner-section" style="display:none;">
+            <h2>Trainingsplaner</h2>
+            <div class="card">
+                <div class="input-group">
+                    <input type="date" id="plan-date">
+                    <select id="plan-boat">
+                        <option value="Einer (1x)">Einer (1x)</option>
+                        <option value="Zweier (2x/-)">Zweier (2x/-)</option>
+                        <option value="Vierer (4x/-)">Vierer (4x/-)</option>
+                        <option value="Achter (8+)">Achter (8+)</option>
+                    </select>
+                    <input type="text" id="plan-task" placeholder="Einheit (z.B. 12km UT2)">
+                    <button class="btn-add" onclick="addPlan()">Planen</button>
+                </div>
+                <div id="plan-list">
+                    <!-- Termine erscheinen hier -->
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    // --- NAVIGATION ---
+    function showSection(id, element) {
+        document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
+        document.getElementById(id + '-section').style.display = 'block';
+        document.querySelectorAll('nav li').forEach(l => l.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    // --- GEZEITEN & WETTER LOGIK ---
+    async function initEnvironment() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                document.getElementById('coords-display').innerText = `GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                fetchWeather(latitude, longitude);
+                // Reverse Geocoding
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
+                    const data = await res.json();
+                    document.querySelector('#location-display span').innerText = data.address.city || data.address.town || "Küste";
+                } catch(e) { document.querySelector('#location-display span').innerText = "Standort aktiv"; }
+            }, () => {
+                fetchWeather(53.55, 8.58); // Fallback Hamburg/Nordsee
+            });
+        }
+        calculateTide();
+    }
+
+    function calculateTide() {
+        const now = new Date();
+        const cycle = 12.42 * 3600 * 1000;
+        const refHW = new Date(); refHW.setHours(2, 0, 0, 0); 
+
+        let diff = (now - refHW) % cycle;
+        if (diff < 0) diff += cycle;
+        const levelPerc = Math.round(((Math.cos((diff / cycle) * 2 * Math.PI) + 1) / 2) * 100);
+
+        document.getElementById('tide-water').style.height = levelPerc + '%';
+        document.getElementById('tide-perc').innerText = levelPerc + '%';
+
+        const isRising = diff > (cycle / 2);
+        const fb = document.getElementById('flow-indicator');
+        fb.className = isRising ? "flow-indicator flow-up" : "flow-indicator flow-down";
+        document.getElementById('flow-text').innerText = isRising ? "Wasser läuft auf" : "Wasser läuft ab";
+        document.getElementById('flow-icon').className = isRising ? "fas fa-arrow-up" : "fas fa-arrow-down";
+
+        const format = (ms) => new Date(Date.now() + ms).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        document.getElementById('hw-time').innerText = format((cycle - diff) % cycle);
+        document.getElementById('nw-time').innerText = format((cycle/2 - diff + cycle) % cycle);
+    }
+
+    async function fetchWeather(lat, lon) {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m&hourly=precipitation_probability`);
+            const data = await res.json();
+            document.getElementById('temp-display').innerText = Math.round(data.current.temperature_2m) + '°';
+            document.getElementById('wind-display').innerText = data.current.wind_speed_10m + ' km/h Wind';
+            const prob = data.hourly.precipitation_probability[new Date().getHours()];
+            document.getElementById('rain-display').innerText = `Regenrisiko: ${prob}%`;
+        } catch(e) { console.error("Wetterfehler"); }
+    }
+
+    // --- KADER LOGIK (LocalStorage) ---
+    let squad = JSON.parse(localStorage.getItem('rowSquad')) || [];
+
+    function addMember() {
+        const name = document.getElementById('member-name').value;
+        const erg = document.getElementById('member-erg').value;
+        if(!name) return;
+        squad.push({ id: Date.now(), name, erg });
+        saveAndRenderSquad();
+        document.getElementById('member-name').value = '';
+        document.getElementById('member-erg').value = '';
+    }
+
+    function deleteMember(id) {
+        squad = squad.filter(m => m.id !== id);
+        saveAndRenderSquad();
+    }
+
+    function saveAndRenderSquad() {
+        localStorage.setItem('rowSquad', JSON.stringify(squad));
+        const list = document.getElementById('member-list');
+        list.innerHTML = squad.map(m => `
+            <div class="list-item">
+                <div><strong>${m.name}</strong> <span style="margin-left:10px; opacity:0.6; font-size:0.8rem;">2k: ${m.erg}</span></div>
+                <button class="delete-btn" onclick="deleteMember(${m.id})"><i class="fas fa-trash"></i></button>
+            </div>
+        `).join('');
+    }
+
+    // --- PLANER LOGIK (LocalStorage) ---
+    let plans = JSON.parse(localStorage.getItem('rowPlans')) || [];
+
+    function addPlan() {
+        const date = document.getElementById('plan-date').value;
+        const boat = document.getElementById('plan-boat').value;
+        const task = document.getElementById('plan-task').value;
+        if(!date || !task) return;
+        plans.push({ id: Date.now(), date, boat, task });
+        plans.sort((a,b) => new Date(a.date) - new Date(b.date));
+        saveAndRenderPlans();
+    }
+
+    function deletePlan(id) {
+        plans = plans.filter(p => p.id !== id);
+        saveAndRenderPlans();
+    }
+
+    function saveAndRenderPlans() {
+        localStorage.setItem('rowPlans', JSON.stringify(plans));
+        const list = document.getElementById('plan-list');
+        list.innerHTML = plans.map(p => `
+            <div class="list-item">
+                <div>
+                    <div style="font-size:0.7rem; color:var(--primary);">${new Date(p.date).toLocaleDateString()}</div>
+                    <strong>${p.boat}</strong>: ${p.task}
+                </div>
+                <button class="delete-btn" onclick="deletePlan(${p.id})"><i class="fas fa-trash"></i></button>
+            </div>
+        `).join('');
+    }
+
+    // --- INIT ---
+    window.onload = () => {
+        initEnvironment();
+        saveAndRenderSquad();
+        saveAndRenderPlans();
+        setInterval(calculateTide, 60000);
+    };
+</script>
+
+</body>
+</html>
