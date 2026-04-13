@@ -2,97 +2,419 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Geeste Kids Coach</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RowCoach Junior - Trainingsplaner</title>
     <style>
-        :root { --blue: #007AFF; --dark: #1C1C1E; --light: #F2F2F7; --green: #34C759; }
-        body { font-family: -apple-system, sans-serif; background: var(--light); margin: 0; padding: 20px; padding-top: 40px; }
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 8px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h1 { font-size: 24px; text-align: center; color: var(--blue); }
-        label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 5px; color: #666; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-blue { background: var(--blue); color: white; }
-        .btn-green { background: var(--green); color: white; margin-top: 15px; display: none; }
-        .result-box { display: none; margin-top: 20px; line-height: 1.6; }
-        .time-badge { background: #eee; padding: 2px 8px; border-radius: 5px; font-weight: bold; font-size: 14px; }
-        .warning { color: #FF3B30; font-weight: bold; text-align: center; }
+        :root {
+            --primary: #2563eb;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgb(0 0 0 / 0.05);
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        h2 { border-bottom: 2px solid var(--primary); padding-bottom: 8px; color: var(--primary); }
+
+        /* Wetter-Status */
+        #status-box {
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .status-go { background-color: var(--success); color: white; }
+        .status-caution { background-color: var(--warning); color: black; }
+        .status-stop { background-color: var(--danger); color: white; }
+
+        /* Formular-Elemente */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        button.secondary { background: #64748b; }
+
+        /* Kinder-Liste */
+        .kid-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Trainingsplan Tabelle */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Timer */
+        .timer-display {
+            font-size: 2.5rem;
+            font-family: monospace;
+            text-align: center;
+            margin: 10px 0;
+            background: var(--dark);
+            color: var(--success);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* Responsive Mobile */
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+            body { padding: 10px; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>🚣‍♂️ Geeste Kids Coach (10-14j)</h1>
+<div class="container">
+    <header>
+        <h1>🚣 RowCoach Junior</h1>
+        <p>Intelligenter Trainingsplaner für 10-14 Jährige</p>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <h2>1. Umwelt-Check</h2>
+            <div class="form-group">
+                <label>Temperatur (°C)</label>
+                <input type="number" id="temp" value="18" oninput="analyzeWeather()">
+            </div>
+            <div class="form-group">
+                <label>Windstärke (Bft)</label>
+                <select id="wind" onchange="analyzeWeather()">
+                    <option value="1">1-2 (Leicht)</option>
+                    <option value="3">3-4 (Mäßig)</option>
+                    <option value="5">5+ (Stark)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Regen</label>
+                <select id="rain" onchange="analyzeWeather()">
+                    <option value="no">Kein Regen</option>
+                    <option value="yes">Es regnet</option>
+                </select>
+            </div>
+            <div id="status-box" class="status-go">Bereit für Analyse</div>
+        </div>
+
+        <div class="card">
+            <h2>2. Zeit & Ziel</h2>
+            <div class="form-group">
+                <label>Trainingsbeginn</label>
+                <input type="time" id="start-time" value="16:00" onchange="generatePlan()">
+            </div>
+            <div class="form-group">
+                <label>Nächster Wettkampf</label>
+                <input type="date" id="race-date" onchange="updateRaceInfo()">
+            </div>
+            <div id="race-countdown" style="font-weight: bold; color: var(--primary);"></div>
+        </div>
+    </div>
 
     <div class="card">
-        <label>Temperatur (°C)</label>
-        <input type="number" id="temp" value="12">
+        <h2>3. Mannschaft (Kinder)</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="new-kid-name" placeholder="Name des Kindes">
+            <button onclick="addKid()">Hinzufügen</button>
+        </div>
+        <div id="kids-list"></div>
+    </div>
+
+    <div class="card" id="plan-section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>4. Dynamischer Trainingsplan (90 Min)</h2>
+            <button onclick="downloadPlan()">Plan Exportieren</button>
+        </div>
+        <div id="training-type-badge" style="font-weight: bold; margin-bottom: 10px;"></div>
+        <table id="plan-table">
+            <thead>
+                <tr>
+                    <th>Zeit</th>
+                    <th>Dauer</th>
+                    <th>Aktivität / Inhalt</th>
+                </tr>
+            </thead>
+            <tbody id="plan-body"></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>5. Trainings-Timer</h2>
+        <div class="timer-display" id="timer-val">00:00</div>
+        <div style="display: flex; justify-content: center; gap: 10px;">
+            <button onclick="startTimer()">Start</button>
+            <button class="secondary" onclick="stopTimer()">Stop</button>
+            <button class="secondary" onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Datenstrukturen
+    let kids = JSON.parse(localStorage.getItem('rowKids')) || [
+        {name: "Lukas", status: "wasser"},
+        {name: "Emma", status: "wasser"}
+    ];
+    let timerInterval;
+    let seconds = 0;
+
+    // Wetter-Analyse
+    function analyzeWeather() {
+        const temp = document.getElementById('temp').value;
+        const wind = document.getElementById('wind').value;
+        const rain = document.getElementById('rain').value;
+        const statusBox = document.getElementById('status-box');
         
-        <label>Wind (km/h)</label>
-        <input type="number" id="wind" value="10">
+        let decision = "wasser";
+        let message = "✅ Aufs Wasser!";
+        statusBox.className = "status-go";
 
-        <label>Gezeiten</label>
-        <select id="tide">
-            <option value="flut">Flut (Strömung hoch)</option>
-            <option value="ebbe">Ebbe (Strömung runter)</option>
-            <option value="hoch">Hochwasser (Stillstand)</option>
-        </select>
+        if (temp < 8 || rain === 'yes') {
+            decision = "halle";
+            message = "❌ Hallentraining (Kälte/Regen)";
+            statusBox.className = "status-stop";
+        } else if (wind >= 5) {
+            decision = "halle";
+            message = "❌ Hallentraining (Starker Wind)";
+            statusBox.className = "status-stop";
+        } else if (temp >= 30) {
+            message = "⚠️ Vorsicht: Hitze! Extra Trinkpausen!";
+            statusBox.className = "status-caution";
+        } else if (wind >= 3) {
+            message = "⚠️ Windig: Nur erfahrene Kinder!";
+            statusBox.className = "status-caution";
+        }
 
-        <button class="btn btn-blue" onclick="createPlan()">Plan erstellen</button>
-    </div>
+        generatePlan(decision, temp >= 30);
+        return decision;
+    }
 
-    <div id="result" class="card result-box">
-        <div id="wind-warn" class="warning" style="display:none;">⚠️ Achtung: Viel Wind für Kinder!</div>
-        <div id="full-plan"></div>
-        <button id="dl-btn" class="btn btn-green" onclick="downloadPlan()">📥 Plan als .txt speichern</button>
-    </div>
+    // Zeitberechnung
+    function addMinutes(timeStr, mins) {
+        const [h, m] = timeStr.split(':').map(Number);
+        const date = new Date();
+        date.setHours(h, m + mins);
+        return date.getHours().toString().padStart(2, '0') + ":" + 
+               date.getMinutes().toString().padStart(2, '0');
+    }
 
-    <script>
-        function createPlan() {
-            const temp = document.getElementById('temp').value;
-            const wind = document.getElementById('wind').value;
-            const tide = document.getElementById('tide').value;
-            const resBox = document.getElementById('result');
-            const planDiv = document.getElementById('full-plan');
-            const warn = document.getElementById('wind-warn');
+    // Plan Generierung
+    function generatePlan(mode = 'wasser', isHot = false) {
+        const startTime = document.getElementById('start-time').value;
+        const planBody = document.getElementById('plan-body');
+        const badge = document.getElementById('training-type-badge');
+        planBody.innerHTML = '';
 
-            resBox.style.display = "block";
-            document.getElementById('dl-btn').style.display = "block";
-            warn.style.display = wind > 20 ? "block" : "none";
+        let structure = [];
+        if (mode === 'wasser') {
+            badge.innerText = "🌊 Modus: Wassertraining";
+            badge.style.color = "var(--primary)";
+            structure = [
+                { title: "Begrüßung & Bootseinteilung", dur: 10 },
+                { title: "Erwärmung & Dehnen", dur: 10 },
+                { title: "Boote zu Wasser lassen", dur: 10 },
+                { title: isHot ? "Technik & Rudern (inkl. Trinkpausen)" : "Technik & Ausdauer", dur: 40 },
+                { title: "Anlegen & Boote reinigen", dur: 10 },
+                { title: "Abschlussbesprechung", dur: 10 }
+            ];
+        } else {
+            badge.innerText = "🏠 Modus: Hallentraining";
+            badge.style.color = "var(--danger)";
+            structure = [
+                { title: "Begrüßung & Umziehen", dur: 5 },
+                { title: "Laufspiel / Aufwärmen", dur: 15 },
+                { title: "Kraft & Koordination (Zirkel)", dur: 30 },
+                { title: "Ergometer-Wettkampf", dur: 20 },
+                { title: "Abschlussspiel", dur: 15 },
+                { title: "Feedbackrunde", dur: 5 }
+            ];
+        }
 
-            let foki = "";
-            if(tide === "flut") foki = "Kraft & Ausdauer (Gegenstrom drücken)";
-            else if(tide === "ebbe") foki = "Schnelligkeit & Rhythmus (Mit dem Strom rollen)";
-            else foki = "Technik & Sprints (Ruhiges Wasser)";
+        let currentTime = startTime;
+        structure.forEach(item => {
+            const row = `<tr>
+                <td>${currentTime}</td>
+                <td>${item.dur} Min</td>
+                <td>${item.title}</td>
+            </tr>`;
+            planBody.innerHTML += row;
+            currentTime = addMinutes(currentTime, item.dur);
+        });
+    }
 
-            const content = `
-                <h3>📋 90 Min. Training (${temp}°C, ${wind}km/h Wind)</h3>
-                <p><strong>Fokus:</strong> ${foki}</p>
-                <hr>
-                <p><span class="time-badge">00-15m</span> <b>Ankommen & Aufwärmen:</b><br>Boote klarmachen, 5 Min. Laufen am Deich, Arme/Schultern kreisen.</p>
-                <p><span class="time-badge">15-30m</span> <b>Einfahren:</b><br>Technik-Drill: 'Wippe' oder nur aus den Armen rudern. Fokus: Blatt sauber setzen.</p>
-                <p><span class="time-badge">30-70m</span> <b>Hauptteil:</b><br>${getHauptteil(tide)}</p>
-                <p><span class="time-badge">70-80m</span> <b>Spiel/Challenge:</b><br>Rückwärts-Wettrennen oder 'Wer rollt am weitesten?'.</p>
-                <p><span class="time-badge">80-90m</span> <b>Auslagern & Feedback:</b><br>Boote putzen, kurze Besprechung.</p>
+    // Kinder-Verwaltung
+    function renderKids() {
+        const list = document.getElementById('kids-list');
+        list.innerHTML = '';
+        kids.forEach((kid, index) => {
+            list.innerHTML += `
+                <div class="kid-item">
+                    <span>${kid.name}</span>
+                    <div>
+                        <select onchange="updateKidStatus(${index}, this.value)">
+                            <option value="wasser" ${kid.status === 'wasser' ? 'selected' : ''}>Wasser OK</option>
+                            <option value="halle" ${kid.status === 'halle' ? 'selected' : ''}>Nur Halle</option>
+                        </select>
+                        <button onclick="removeKid(${index})" style="background:var(--danger); padding: 5px 10px; margin-left:10px;">X</button>
+                    </div>
+                </div>
             `;
-            planDiv.innerHTML = content;
-            resBox.scrollIntoView({ behavior: 'smooth' });
-        }
+        });
+        localStorage.setItem('rowKids', JSON.stringify(kids));
+    }
 
-        function getHauptteil(tide) {
-            if(tide === "flut") return "3x 8 Min. Pyramide gegen den Strom (Steigerung der Kraft).";
-            if(tide === "ebbe") return "4x 500m Sprints mit dem Strom, Fokus auf schnelles Händewegführen.";
-            return "Slalom um Bojen oder Technik-Fokus: 10 Schläge Augen zu, 10 Schläge auf.";
+    function addKid() {
+        const input = document.getElementById('new-kid-name');
+        if (input.value) {
+            kids.push({name: input.value, status: "wasser"});
+            input.value = '';
+            renderKids();
         }
+    }
 
-        function downloadPlan() {
-            const text = document.getElementById('full-plan').innerText;
-            const blob = new Blob([text], { type: "text/plain" });
-            const anchor = document.createElement("a");
-            anchor.download = "Ruder_Trainingsplan.txt";
-            anchor.href = window.URL.createObjectURL(blob);
-            anchor.click();
+    function removeKid(index) {
+        kids.splice(index, 1);
+        renderKids();
+    }
+
+    function updateKidStatus(index, val) {
+        kids[index].status = val;
+        renderKids();
+    }
+
+    // Wettkampf-Logik
+    function updateRaceInfo() {
+        const raceDate = new Date(document.getElementById('race-date').value);
+        const today = new Date();
+        const diffTime = raceDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        const info = document.getElementById('race-countdown');
+        if (diffDays > 0) {
+            info.innerText = `⏳ Noch ${diffDays} Tage bis zum Wettkampf! (Intensität: ${diffDays < 7 ? 'Hoch' : 'Normal'})`;
+        } else {
+            info.innerText = "";
         }
-    </script>
+    }
+
+    // Timer
+    function startTimer() {
+        if (timerInterval) return;
+        timerInterval = setInterval(() => {
+            seconds++;
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-val').innerText = `${mins}:${secs}`;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    function resetTimer() {
+        stopTimer();
+        seconds = 0;
+        document.getElementById('timer-val').innerText = "00:00";
+    }
+
+    // Export
+    function downloadPlan() {
+        const startTime = document.getElementById('start-time').value;
+        const type = document.getElementById('training-type-badge').innerText;
+        let content = `TRAININGSPLAN\nDatum: ${new Date().toLocaleDateString()}\nStart: ${startTime}\n${type}\n\nPLAN:\n`;
+        
+        const rows = document.querySelectorAll('#plan-table tr');
+        rows.forEach(row => {
+            const cols = row.querySelectorAll('td, th');
+            content += Array.from(cols).map(c => c.innerText).join(" | ") + "\n";
+        });
+
+        content += "\nTEILNEHMER:\n";
+        kids.forEach(k => content += `- ${k.name} (${k.status})\n`);
+
+        const blob = new Blob([content], {type: 'text/plain'});
+        const anchor = document.createElement('a');
+        anchor.download = "trainingsplan.txt";
+        anchor.href = (window.URL || window.webkitURL).createObjectURL(blob);
+        anchor.click();
+    }
+
+    // Initialisierung
+    window.onload = () => {
+        analyzeWeather();
+        renderKids();
+    };
+</script>
+
 </body>
 </html>
