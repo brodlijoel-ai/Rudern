@@ -41,9 +41,12 @@
         /* Training Plan Detail Styling */
         .kid-plan-card { background: rgba(255,255,255,0.03); border-left: 4px solid var(--primary); padding: 20px; border-radius: 12px; margin-bottom: 25px; }
         .exercise-block { margin-top: 15px; padding-left: 15px; border-left: 1px solid #334155; }
-        .ex-title { color: var(--primary); font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
-        .ex-desc { color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px; line-height: 1.4; }
-        .ex-instruction { background: rgba(0,210,255,0.1); padding: 10px; border-radius: 6px; font-size: 0.85rem; color: #e2e8f0; border-left: 3px solid var(--primary); }
+        .ex-title { color: var(--primary); font-weight: 600; font-size: 1rem; margin-bottom: 4px; display: flex; justify-content: space-between;}
+        .ex-time { color: #94a3b8; font-size: 0.85rem; font-weight: normal; }
+        .ex-desc { color: #f8fafc; font-size: 0.95rem; margin-bottom: 10px; line-height: 1.4; font-weight: 600;}
+        .ex-instruction { background: rgba(0,210,255,0.05); padding: 12px; border-radius: 6px; font-size: 0.85rem; color: #cbd5e1; border-left: 3px solid var(--primary); line-height: 1.5; }
+        
+        .comp-focus { background: rgba(244, 63, 94, 0.1); border-left: 3px solid var(--accent); padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 0.85rem; color: #fecdd3; }
 
         /* Forms */
         .form-group { margin-bottom: 1rem; }
@@ -56,6 +59,7 @@
         .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
         .badge-water { background: #0369a1; }
         .badge-hall { background: #7c3aed; }
+        .badge-comp { background: var(--accent); color: white; margin-left: 10px;}
 
         @media (max-width: 900px) { .app-container { grid-template-columns: 1fr; } aside { display: none; } }
     </style>
@@ -84,7 +88,7 @@
                 </div>
                 <div class="card">
                     <h3><i class="fas fa-info-circle"></i> Kader-Status</h3>
-                    <div id="stats-info" style="font-size: 1.5rem; margin: 15px 0;">0 Kinder aktiv</div>
+                    <div id="stats-info" style="font-size: 1.5rem; margin: 15px 0;">0 Sportler aktiv</div>
                 </div>
             </div>
         </section>
@@ -93,7 +97,7 @@
         <section id="kids-section" style="display:none;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Kader-Management</h2>
-                <button class="btn" onclick="openModal()"><i class="fas fa-plus"></i> Kind hinzufügen</button>
+                <button class="btn" onclick="openModal()"><i class="fas fa-plus"></i> Sportler hinzufügen</button>
             </div>
             <div id="kids-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;"></div>
         </section>
@@ -113,7 +117,7 @@
                         <input type="date" id="comp-date">
                     </div>
                     <div class="form-group">
-                        <label>Dauer (Minuten)</label>
+                        <label>Trainingsdauer (Minuten)</label>
                         <input type="number" id="train-duration" value="90">
                     </div>
                 </div>
@@ -122,9 +126,7 @@
                 <button class="btn btn-ghost" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> PDF Export</button>
             </div>
 
-            <div id="plan-output" style="display:none;">
-                <!-- Hier landet der detaillierte Plan -->
-            </div>
+            <div id="plan-output" style="display:none;"></div>
         </section>
     </main>
 </div>
@@ -132,7 +134,7 @@
 <!-- MODAL -->
 <div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:100; align-items:center; justify-content:center;">
     <div class="card" style="width: 400px;">
-        <h3>Kind hinzufügen</h3>
+        <h3>Sportler hinzufügen</h3>
         <div class="form-group">
             <label>Name</label>
             <input type="text" id="k-name">
@@ -147,10 +149,10 @@
             </select>
         </div>
         <div class="form-group">
-            <label>Wettkampf-Teilnahme</label>
+            <label>Aktiver Wettkampfkader?</label>
             <select id="k-comp">
-                <option value="ja">Ja</option>
-                <option value="nein">Nein</option>
+                <option value="ja">Ja (Spezifisches Renntraining)</option>
+                <option value="nein">Nein (Nur Fitness/Technik)</option>
             </select>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -163,7 +165,7 @@
 <script>
     let state = {
         kids: JSON.parse(localStorage.getItem('rowing_v2_kids')) || [],
-        mode: 'Wasser', // Standard
+        mode: 'Wasser',
         weather: { wind: 0, temp: 0 }
     };
 
@@ -187,7 +189,9 @@
             state.weather.temp = data.current.temperature_2m;
             document.getElementById('weather-info').innerHTML = `${state.weather.temp}°C | Wind: ${state.weather.wind} km/h`;
             if(state.weather.wind > 20) {
-                document.getElementById('weather-hint').innerText = "Achtung: Wind zu stark für Wassertraining!";
+                document.getElementById('weather-hint').innerText = "Achtung: Wind zu stark für Anfänger im Einer!";
+            } else if (state.weather.temp < 10) {
+                document.getElementById('weather-hint').innerText = "Kaltes Wetter: Auf längeres Aufwärmen an Land achten.";
             }
         } catch(e) {}
     }
@@ -199,7 +203,6 @@
         event.currentTarget.classList.add('active');
     }
 
-    /* KIDS CRUD */
     function openModal() { document.getElementById('modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
     function saveKid() {
@@ -216,32 +219,43 @@
         localStorage.setItem('rowing_v2_kids', JSON.stringify(state.kids));
         renderKids(); updateStats();
     }
+    
     function renderKids() {
         const list = document.getElementById('kids-list');
         list.innerHTML = state.kids.map(k => `
             <div class="card" style="padding: 15px;">
-                <h4>${k.name}</h4>
-                <p style="font-size:0.8rem; color:#94a3b8;">Level ${k.level} | WK: ${k.comp}</p>
-                <button class="btn btn-ghost" onclick="deleteKid(${k.id})" style="margin-top:10px; padding: 5px 10px;">Löschen</button>
+                <h4>${k.name} ${k.comp === 'ja' ? '<span class="badge badge-comp"><i class="fas fa-trophy"></i></span>' : ''}</h4>
+                <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Level ${k.level}</p>
+                <button class="btn btn-ghost" onclick="deleteKid(${k.id})" style="margin-top:10px; padding: 5px 10px; font-size: 0.8rem;">Entfernen</button>
             </div>
         `).join('');
     }
-    function updateStats() { document.getElementById('stats-info').innerText = `${state.kids.length} Kinder im Kader`; }
+    function updateStats() { document.getElementById('stats-info').innerText = `${state.kids.length} Sportler im Kader`; }
 
-    /* DETAIL GENERATOR LOGIC */
+    /* CORE GENERATOR LOGIC */
     function generateDetailedPlan() {
         if(state.kids.length === 0) return alert("Kader leer!");
+        
+        const duration = parseInt(document.getElementById('train-duration').value) || 90;
+        const times = {
+            warmup: Math.round(duration * 0.15),
+            technique: Math.round(duration * 0.25),
+            main: Math.round(duration * 0.50),
+            cooldown: Math.round(duration * 0.10)
+        };
+
         const output = document.getElementById('plan-output');
         const phase = calculatePhase();
         
         let html = `<div id="plan-capture" style="background:#0f172a; padding:30px; border-radius:20px; border: 1px solid #334155;">
             <div style="text-align:center; margin-bottom:30px; border-bottom: 2px solid var(--primary); padding-bottom:15px;">
-                <h1 style="color:white;">TRAININGSPLAN: ${state.mode.toUpperCase()}</h1>
-                <p style="color:var(--primary); font-weight:bold;">Phase: ${phase} | Ort: Bremerhaven | Datum: ${new Date().toLocaleDateString()}</p>
+                <h1 style="color:white; margin-bottom: 10px;">TRAININGSPLAN: ${state.mode.toUpperCase()}</h1>
+                <p style="color:var(--primary); font-weight:bold;">Makro-Phase: ${phase} | Dauer: ${duration} Min | Datum: ${new Date().toLocaleDateString()}</p>
+                ${state.weather.wind > 15 ? `<p style="color:var(--warning); font-size: 0.85rem; margin-top:10px;"><i class="fas fa-exclamation-triangle"></i> Windwarnung (${state.weather.wind} km/h) berücksichtigt.</p>` : ''}
             </div>`;
 
         state.kids.forEach(kid => {
-            html += generateIndividualKidPlan(kid, phase, state.mode);
+            html += generateIndividualKidPlan(kid, phase, state.mode, times);
         });
 
         html += `</div>`;
@@ -251,86 +265,137 @@
 
     function calculatePhase() {
         const d = document.getElementById('comp-date').value;
-        if(!d) return "Grundlagenausdauer (GA)";
+        if(!d) return "Grundlagenausdauer (GA) - Kein spezifischer Wettkampf hinterlegt";
         const diff = (new Date(d) - new Date()) / (1000*3600*24);
-        if(diff < 14) return "Wettkampf-Peak (Tapering)";
-        if(diff < 45) return "Spezifische Ausdauer (WSA)";
-        return "Aufbauphase (Technik & Kraft)";
+        if(diff < 14) return "Wettkampf-Peak (Tapering & Sprints)";
+        if(diff < 45) return "Spezifische Ausdauer (WSA & Laktattoleranz)";
+        return "Aufbauphase (Technik, Kraftausdauer & GA1)";
     }
 
-    function generateIndividualKidPlan(kid, phase, mode) {
+    function generateIndividualKidPlan(kid, phase, mode, times) {
         const exercises = (mode === 'Wasser') ? getWaterDetails(kid, phase) : getHallDetails(kid, phase);
         
+        let compBlock = "";
+        if (kid.comp === 'ja') {
+            const compText = mode === 'Wasser' ? 
+                `<strong><i class="fas fa-flag-checkered"></i> Wettkampf-Fokus:</strong> Am Ende des Hauptteils 3x Startübung (Startschlag + 5 Übergangsschläge). Fokus auf explosive Kraftübertragung ohne Technikverlust.` :
+                `<strong><i class="fas fa-flag-checkered"></i> Wettkampf-Fokus:</strong> Visualisierungstraining während des Ergos: Stelle dir die letzten 250m deines Rennens vor. Erhöhe auf den letzten 2 Minuten die Schlagfrequenz um +2.`;
+            compBlock = `<div class="comp-focus">${compText}</div>`;
+        }
+
         return `
         <div class="kid-plan-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="color:white;">Für: ${kid.name}</h3>
-                <span class="badge ${mode === 'Wasser' ? 'badge-water' : 'badge-hall'}">${mode}</span>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <h3 style="color:white; font-size: 1.4rem;">${kid.name}</h3>
+                    <p style="font-size:0.85rem; color:var(--primary); margin-top:4px;">Level ${kid.level} Fokus: ${getLevelGoal(kid.level)}</p>
+                </div>
+                <div>
+                    <span class="badge ${mode === 'Wasser' ? 'badge-water' : 'badge-hall'}">${mode}</span>
+                    ${kid.comp === 'ja' ? '<span class="badge badge-comp">Wettkampf</span>' : ''}
+                </div>
             </div>
-            <p style="font-size:0.85rem; color:var(--primary); margin-bottom:15px;">Level-Ziel: ${getLevelGoal(kid.level)}</p>
             
             <div class="exercise-block">
-                <div class="ex-title">1. Vorbereitung & Mobilisation (15 Min)</div>
+                <div class="ex-title">1. Vorbereitung & Aufwärmen <span class="ex-time">${times.warmup} Min</span></div>
                 <div class="ex-desc">${exercises.warmup.name}</div>
-                <div class="ex-instruction"><strong>Was ist zu tun?</strong> ${exercises.warmup.desc}</div>
+                <div class="ex-instruction"><strong>Ausführung:</strong> ${exercises.warmup.desc}</div>
             </div>
 
             <div class="exercise-block">
-                <div class="ex-title">2. Technik-Fokus (25 Min)</div>
+                <div class="ex-title">2. Technik- & Motorik <span class="ex-time">${times.technique} Min</span></div>
                 <div class="ex-desc">${exercises.technique.name}</div>
-                <div class="ex-instruction"><strong>Ausführung:</strong> ${exercises.technique.desc}</div>
+                <div class="ex-instruction"><strong>Trainer-Hinweis:</strong> ${exercises.technique.desc}</div>
             </div>
 
             <div class="exercise-block">
-                <div class="ex-title">3. Hauptbelastung (40 Min)</div>
+                <div class="ex-title">3. Physischer Hauptteil <span class="ex-time">${times.main} Min</span></div>
                 <div class="ex-desc">${exercises.main.name}</div>
-                <div class="ex-instruction"><strong>Zielwert:</strong> ${exercises.main.desc}</div>
+                <div class="ex-instruction"><strong>Trainingsziel:</strong> ${exercises.main.desc}</div>
+                ${compBlock}
             </div>
 
             <div class="exercise-block">
-                <div class="ex-title">4. Cool-down & Bootspflege (10 Min)</div>
-                <div class="ex-desc">Locker Auspaddeln / Dehnen</div>
-                <div class="ex-instruction">Dehnen der Hüftbeuger und des unteren Rückens. Boot mit Süßwasser reinigen.</div>
+                <div class="ex-title">4. Cool-down & Pflege <span class="ex-time">${times.cooldown} Min</span></div>
+                <div class="ex-desc">${exercises.cooldown.name}</div>
+                <div class="ex-instruction">${exercises.cooldown.desc}</div>
             </div>
         </div>`;
     }
 
     function getLevelGoal(lvl) {
-        const goals = ["", "Gleichgewicht & Bootsgefühl", "Rhythmus & Rollsitzführung", "Druckaufbau & Wasserarbeit", "Renntaktik & Schnellkraft"];
+        const goals = [
+            "", 
+            "Sicherheit im Boot, Balance & Basis-Bewegungsablauf", 
+            "Wasserfassen, Rhythmus & Blattführung", 
+            "Druckverlauf, Krafteinsatz & Streckenausdauer", 
+            "Laktattoleranz, Renntaktik & Maximale Bootsgeschwindigkeit"
+        ];
         return goals[lvl];
     }
 
-    /* DATA REPOSITORY FOR TASKS */
+    /* DATA REPOSITORY FOR TASKS (VERY SPECIFIC NOW) */
     function getWaterDetails(kid, phase) {
-        const data = {
-            warmup: { name: "Einrudern & Core-Aktivierung", desc: "15 Min ganz lockeres Paddeln. Alle 500m 10 Schläge nur mit den Armen, um die Verbindung zum Wasser zu spüren." },
-            technique: {}, main: {}
-        };
+        const windWarning = state.weather.wind > 15 ? " Wegen Wind: Skulls etwas fester greifen und Blätter beim Vorrollen flach halten!" : "";
+        let data = { warmup: {}, technique: {}, main: {}, cooldown: { name: "Locker Auspaddeln", desc: "Komplett kraftfrei rudern. Danach Boot mit Süßwasser abwaschen." } };
 
-        if(kid.level <= 2) {
-            data.technique = { name: "Pausenrudern (Balance)", desc: "Rudere normale Schläge, aber stoppe die Bewegung für 2 Sek., wenn die Hände über den Knien sind. Das Boot muss dabei völlig gerade liegen." };
-            data.main = { name: "GA1 - Ausdauer", desc: "4 x 1000m mit 2 Min Pause. Fokus auf konstanten Schlagrhythmus (SF 18-20)." };
-        } else {
-            data.technique = { name: "Blattführung (Anrollen)", desc: "Fokus auf das frühzeitige Aufdrehen der Blätter. Das Blatt muss 10cm vor dem Umkehrpunkt bereits senkrecht stehen." };
-            data.main = phase.includes("Peak") ? 
-                { name: "Sprints (WSA)", desc: "10 x 250m Vollgas. SF 32-36. Volle Konzentration auf den explosiven Beinstoß." } :
-                { name: "Pyramidentraining", desc: "2000m - 1000m - 500m - 1000m - 2000m. SF 20/22/24/22/20." };
+        switch(kid.level) {
+            case 1: // Anfänger
+                data.warmup = { name: "Bootsgewöhnung im Gig/Breitboot", desc: `Ablegen üben. 5 Minuten nur mit den Armen rudern, um das Gleichgewicht zu finden.${windWarning}` };
+                data.technique = { name: "Sequenz-Rudern", desc: "Trennung der Bewegung: 1. Nur Arme, 2. Arme + Oberkörper, 3. Halbe Rollschiene. Auf sauberes Vorrollen ohne Hektik achten." };
+                data.main = { name: "Kilometer sammeln (GA1 Basis)", desc: "Gleichmäßiges Rudern mit sehr geringem Krafteinsatz. Fokus: Das Boot soll nicht kippeln. Pausen alle 500m." };
+                break;
+            case 2: // Fortgeschritten
+                data.warmup = { name: "Einrudern mit Rhythmuswechsel", desc: "Langsam beginnen. Jeden 3. Schlag etwas kräftiger ziehen. SF (Schlagfrequenz) bei 18 halten." };
+                data.technique = { name: "Pausenrudern am Umkehrpunkt", desc: `2 Sekunden Pause, wenn die Hände über den Knien sind. Boot muss komplett waagerecht liegen.${windWarning}` };
+                data.main = { name: "Streckenrudern mit Druckaufbau", desc: "4x 1000m Rudern. Auf den mittleren 500m den Druck auf die Beine erhöhen (GA1-GA2). Sauberes Wasserfassen." };
+                break;
+            case 3: // Leistungssport
+                data.warmup = { name: "Dynamisches Warm-up & Core", desc: "15 Schläge Beinarbeit isoliert. Danach fließender Übergang in den vollen Rollweg." };
+                data.technique = { name: "Blind-Rudern & Wassergefühl", desc: "Augen für 10 Schläge schließen. Spüre den Widerstand am Blatt beim Durchzug und das 'Laufen' des Bootes in der Freilaufphase." };
+                data.main = phase.includes("Peak") ? 
+                    { name: "WSA Intervalle (Wettkampftempo)", desc: "6x 500m im Renntempo (SF 30-34). Dazwischen 2 Min lockeres Paddeln. Fokus auf aggressiven Beinstoß." } :
+                    { name: "Fahrtspiel (Fartlek)", desc: "Wechselnde Intensitäten: 3 Min GA1 (SF 20) -> 2 Min GA2 (SF 24) -> 1 Min Entwicklungsbereich (SF 28). Diesen Block 4x wiederholen." };
+                break;
+            case 4: // Elite
+                data.warmup = { name: "Spezifische Mobilisation", desc: "Reverse Pick-Drill. Fokus auf die absolut synchrone Kraftübertragung ab dem Catch (Wasserfassen)." };
+                data.technique = { name: "Catch-Placement & Suspension", desc: "Die Blätter müssen ins Wasser fallen, BEVOR der Beindruck beginnt. Übung: 'Tap-Downs' am Catch." };
+                data.main = phase.includes("Peak") ? 
+                    { name: "Start- & Spurt-Simulation", desc: "3x 1000m. Die ersten 250m Vollgas (Startphase), dann 500m Streckenschlag (SF 32), letzte 250m Endspurt (SF 36+)." } :
+                    { name: "Laktatschwelle (AT-Training)", desc: "3x 3000m knapp unter der anaeroben Schwelle (SF 24-26). Konstant hoher Druck pro Schlag. 4 Min aktive Pause." };
+                break;
         }
         return data;
     }
 
     function getHallDetails(kid, phase) {
-        const data = {
-            warmup: { name: "Dynamisches Warm-up", desc: "10 Min Laufen, Hopserlauf, Armkreisen. Danach 5 Min Mobilisation der Sprunggelenke." },
-            technique: {}, main: {}
-        };
+        let data = { warmup: {}, technique: {}, main: {}, cooldown: { name: "Stretching & Blackroll", desc: "Fokus auf Hüftbeuger, vorderer Oberschenkel und unteren Rücken. Ergo-Schiene reinigen!" } };
 
-        if(kid.level <= 2) {
-            data.technique = { name: "Ergo-Positionsschulung", desc: "Arbeite nur am Ergo. Fokus auf die Reihenfolge: Erst Arme, dann Oberkörper, dann Beine beim Vorrollen." };
-            data.main = { name: "Koordinations-Zirkel", desc: "3 Runden: 30 Sek Plank, 30 Sek Einbeinstand auf Matte, 30 Sek Medizinball-Rotation." };
-        } else {
-            data.technique = { name: "Kraftübertragung (Drag Factor)", desc: "Stelle den Luftklappenwert auf 110. Versuche bei SF 20 die maximale Wattzahl pro Schlag zu erreichen." };
-            data.main = { name: "Intervall-Ergo", desc: "3 x 10 Min (UT1-Bereich). Puls 150-160. Fokus auf sauberen Endzug ohne Reißen." };
+        switch(kid.level) {
+            case 1: 
+                data.warmup = { name: "Gymnastik & Ergo-Start", desc: "10 Min Hampelmann, Kniehebelauf. Dann auf dem Ergo (Luftklappe 1-2) leicht anrollen." };
+                data.technique = { name: "Ergo-Positionsschulung", desc: "Griffhaltung kontrollieren (Finger locker). Hände schnell vom Körper wegführen, bevor die Knie hochkommen." };
+                data.main = { name: "Fitness-Zirkel", desc: "Im Wechsel: 5 Min Ergo (SF 18) -> 1 Min Unterarmstütz -> 15 Kniebeugen. Das Ganze 3 Runden." };
+                break;
+            case 2:
+                data.warmup = { name: "Ergo Einrudern", desc: "Drag Factor auf ca. 100 stellen. 10 Minuten locker rudern, alle 2 Min für 10 Schläge die Beine betonen." };
+                data.technique = { name: "Kraftübertragungskurve", desc: "Auf dem PM-Monitor die Kraftkurve anzeigen lassen. Das Ziel ist eine gleichmäßige, parabelförmige Kurve ohne Dellen." };
+                data.main = { name: "Stufen-Test Basis", desc: "3x 8 Min auf dem Ergo. 1. Block: SF 18, 2. Block: SF 20, 3. Block: SF 22. Der Puls sollte pro Stufe leicht steigen." };
+                break;
+            case 3:
+                data.warmup = { name: "Aufwärmen & Aktivierung", desc: "10 Min Ergo, gefolgt von dynamischem Dehnen. 3x 10 Medizinball-Würfe (für Explosivität aus dem Rumpf)." };
+                data.technique = { name: "Watt pro Schlag maximieren", desc: "Versuche bei sehr niedriger Frequenz (SF 16-18) maximale Wattzahlen zu ziehen, um die spezifische Ruderkraft zu testen." };
+                data.main = phase.includes("Peak") ? 
+                    { name: "Anaerobes Intervalltraining", desc: "8x 500m Ergo voll (Pace wie im 2000m Test). 1:30 Min Pause. Ziel ist es, die Zeit exakt konstant zu halten." } :
+                    { name: "GA1 Langstrecke", desc: "2x 20 Min. Konstant bei 70-75% der max. Herzfrequenz. Mentales Training: Technik trotz Ermüdung sauber halten." };
+                break;
+            case 4:
+                data.warmup = { name: "Wettkampf-Warmup Protokoll", desc: "15 Min spezifisches Einfahren inkl. 3 kurzer Sprints (10 Schläge) zur Aktivierung des ZNS." };
+                data.technique = { name: "Rhythmus & Ratio", desc: "Fokus auf das Verhältnis Durchzug zu Vorrollen (1:2). Schneller, harter Zug, kontrolliertes, entspanntes Vorrollen." };
+                data.main = phase.includes("Peak") ? 
+                    { name: "Laktattoleranz (VO2Max)", desc: "4x 1000m (Pace: 2K-Zieltempo minus 1 Sekunde). 3 Minuten Pause. Sehr hartes Training für den Wettkampf-Punch." } :
+                    { name: "Schwellentraining / Kraftausdauer", desc: "3x 15 Min Ergo (SF 24, Drag Factor 130). Alternierend mit Langhantel-Kniebeugen (4x 8 Reps, 75% 1RM)." };
+                break;
         }
         return data;
     }
@@ -340,11 +405,11 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'pt', 'a4');
         const element = document.getElementById('plan-capture');
-        if(!element) return alert("Erst Plan generieren!");
+        if(!element) return alert("Bitte generiere zuerst einen Plan!");
 
-        await html2canvas(element, { scale: 2 });
+        await html2canvas(element, { scale: 2, backgroundColor: "#0f172a" });
         doc.html(element, {
-            callback: function(doc) { doc.save(`EliteRow_Plan.pdf`); },
+            callback: function(doc) { doc.save(`EliteRow_Trainingsplan_${new Date().toISOString().split('T')[0]}.pdf`); },
             x: 20, y: 20, width: 550, windowWidth: 1000
         });
     }
