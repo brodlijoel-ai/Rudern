@@ -3,418 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RowCoach Junior - Trainingsplaner</title>
+    <title>RowTrack Pro | Bremerhaven Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --primary: #2563eb;
-            --success: #22c55e;
-            --warning: #eab308;
-            --danger: #ef4444;
-            --dark: #1e293b;
-            --light: #f8fafc;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f1f5f9;
-            color: var(--dark);
-            margin: 0;
-            padding: 20px;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgb(0 0 0 / 0.05);
-            margin-bottom: 20px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        h2 { border-bottom: 2px solid var(--primary); padding-bottom: 8px; color: var(--primary); }
-
-        /* Wetter-Status */
-        #status-box {
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        .status-go { background-color: var(--success); color: white; }
-        .status-caution { background-color: var(--warning); color: black; }
-        .status-stop { background-color: var(--danger); color: white; }
-
-        /* Formular-Elemente */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-
-        button {
-            cursor: pointer;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-
-        button:hover { opacity: 0.9; }
-        button.secondary { background: #64748b; }
-
-        /* Kinder-Liste */
-        .kid-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        /* Trainingsplan Tabelle */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        /* Timer */
-        .timer-display {
-            font-size: 2.5rem;
-            font-family: monospace;
-            text-align: center;
-            margin: 10px 0;
-            background: var(--dark);
-            color: var(--success);
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        /* Responsive Mobile */
-        @media (max-width: 600px) {
-            .grid { grid-template-columns: 1fr; }
-            body { padding: 10px; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .gradient-nav { background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%); }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .card { background: white; border-radius: 1.5rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
-<body>
+<body class="min-h-screen text-slate-900">
 
-<div class="container">
-    <header>
-        <h1>🚣 RowCoach Junior</h1>
-        <p>Intelligenter Trainingsplaner für 10-14 Jährige</p>
-    </header>
-
-    <div class="grid">
-        <div class="card">
-            <h2>1. Umwelt-Check</h2>
-            <div class="form-group">
-                <label>Temperatur (°C)</label>
-                <input type="number" id="temp" value="18" oninput="analyzeWeather()">
+    <!-- HEADER & WETTER-BAR -->
+    <nav class="gradient-nav text-white no-print pb-20 pt-8 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight flex items-center gap-3">
+                        <i data-lucide="waves" class="w-10 h-10 text-sky-300"></i> RowTrack Pro
+                    </h1>
+                    <p class="text-sky-100 opacity-80 font-medium">Kinderrudern | Standort: Bremerhaven (Weser)</p>
+                </div>
+                
+                <div id="weather-hub" class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/20">
+                    <div class="text-center">
+                        <p class="text-[10px] uppercase font-bold text-sky-200">Temp / Regen</p>
+                        <p id="data-temp" class="font-bold text-lg">--°C <span class="text-xs font-normal opacity-70">(--%)</span></p>
+                    </div>
+                    <div class="text-center border-l border-white/10">
+                        <p class="text-[10px] uppercase font-bold text-sky-200">Windstärke</p>
+                        <p id="data-wind" class="font-bold text-lg">-- km/h</p>
+                    </div>
+                    <div class="text-center border-l border-white/10">
+                        <p class="text-[10px] uppercase font-bold text-sky-200">Sonne (GHI)</p>
+                        <p id="data-solar" class="font-bold text-lg">-- W/m²</p>
+                    </div>
+                    <div class="text-center border-l border-white/10">
+                        <p class="text-[10px] uppercase font-bold text-sky-200">Nächste Tide</p>
+                        <p id="data-tide" class="font-bold text-xs mt-1">Lade...</p>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Windstärke (Bft)</label>
-                <select id="wind" onchange="analyzeWeather()">
-                    <option value="1">1-2 (Leicht)</option>
-                    <option value="3">3-4 (Mäßig)</option>
-                    <option value="5">5+ (Stark)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Regen</label>
-                <select id="rain" onchange="analyzeWeather()">
-                    <option value="no">Kein Regen</option>
-                    <option value="yes">Es regnet</option>
-                </select>
-            </div>
-            <div id="status-box" class="status-go">Bereit für Analyse</div>
         </div>
+    </nav>
 
-        <div class="card">
-            <h2>2. Zeit & Ziel</h2>
-            <div class="form-group">
-                <label>Trainingsbeginn</label>
-                <input type="time" id="start-time" value="16:00" onchange="generatePlan()">
-            </div>
-            <div class="form-group">
-                <label>Nächster Wettkampf</label>
-                <input type="date" id="race-date" onchange="updateRaceInfo()">
-            </div>
-            <div id="race-countdown" style="font-weight: bold; color: var(--primary);"></div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>3. Mannschaft (Kinder)</h2>
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <input type="text" id="new-kid-name" placeholder="Name des Kindes">
-            <button onclick="addKid()">Hinzufügen</button>
-        </div>
-        <div id="kids-list"></div>
-    </div>
-
-    <div class="card" id="plan-section">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>4. Dynamischer Trainingsplan (90 Min)</h2>
-            <button onclick="downloadPlan()">Plan Exportieren</button>
-        </div>
-        <div id="training-type-badge" style="font-weight: bold; margin-bottom: 10px;"></div>
-        <table id="plan-table">
-            <thead>
-                <tr>
-                    <th>Zeit</th>
-                    <th>Dauer</th>
-                    <th>Aktivität / Inhalt</th>
-                </tr>
-            </thead>
-            <tbody id="plan-body"></tbody>
-        </table>
-    </div>
-
-    <div class="card">
-        <h2>5. Trainings-Timer</h2>
-        <div class="timer-display" id="timer-val">00:00</div>
-        <div style="display: flex; justify-content: center; gap: 10px;">
-            <button onclick="startTimer()">Start</button>
-            <button class="secondary" onclick="stopTimer()">Stop</button>
-            <button class="secondary" onclick="resetTimer()">Reset</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Datenstrukturen
-    let kids = JSON.parse(localStorage.getItem('rowKids')) || [
-        {name: "Lukas", status: "wasser"},
-        {name: "Emma", status: "wasser"}
-    ];
-    let timerInterval;
-    let seconds = 0;
-
-    // Wetter-Analyse
-    function analyzeWeather() {
-        const temp = document.getElementById('temp').value;
-        const wind = document.getElementById('wind').value;
-        const rain = document.getElementById('rain').value;
-        const statusBox = document.getElementById('status-box');
+    <main class="max-w-6xl mx-auto px-4 -mt-12 space-y-8">
         
-        let decision = "wasser";
-        let message = "✅ Aufs Wasser!";
-        statusBox.className = "status-go";
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- SETUP COLUMN -->
+            <div class="lg:col-span-4 space-y-6 no-print">
+                <div class="card p-6">
+                    <h2 class="font-black text-slate-800 uppercase tracking-widest text-sm mb-4 flex items-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4 text-sky-600"></i> Konfiguration
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Datum nächster Wettkampf</label>
+                            <input type="date" id="race-date" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 transition">
+                        </div>
+                        <div id="kids-list" class="space-y-3">
+                            <!-- Dynamische Kinderliste -->
+                        </div>
+                        <button onclick="addKid()" class="w-full py-2 border-2 border-dashed border-slate-200 text-slate-400 rounded-xl text-xs font-bold hover:bg-slate-50 transition flex items-center justify-center gap-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Kind hinzufügen
+                        </button>
+                    </div>
+                </div>
 
-        if (temp < 8 || rain === 'yes') {
-            decision = "halle";
-            message = "❌ Hallentraining (Kälte/Regen)";
-            statusBox.className = "status-stop";
-        } else if (wind >= 5) {
-            decision = "halle";
-            message = "❌ Hallentraining (Starker Wind)";
-            statusBox.className = "status-stop";
-        } else if (temp >= 30) {
-            message = "⚠️ Vorsicht: Hitze! Extra Trinkpausen!";
-            statusBox.className = "status-caution";
-        } else if (wind >= 3) {
-            message = "⚠️ Windig: Nur erfahrene Kinder!";
-            statusBox.className = "status-caution";
+                <button onclick="generatePlan()" class="w-full py-5 bg-sky-600 text-white font-black rounded-2xl shadow-xl hover:bg-sky-700 transition transform hover:-translate-y-1 flex items-center justify-center gap-3 uppercase tracking-widest">
+                    <i data-lucide="zap" class="fill-current"></i> Plan Erstellen
+                </button>
+            </div>
+
+            <!-- OUTPUT COLUMN -->
+            <div class="lg:col-span-8">
+                <div id="plan-output" class="card min-h-[600px] p-8 md:p-12 relative hidden fade-in">
+                    <button onclick="exportPDF()" class="absolute top-6 right-6 no-print bg-emerald-100 text-emerald-700 p-3 rounded-full hover:bg-emerald-200 transition shadow-sm">
+                        <i data-lucide="download"></i>
+                    </button>
+                    <div id="render-area">
+                        <!-- Hier wird der Trainingsplan generiert -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="placeholder" class="card h-[400px] border-4 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
+                    <i data-lucide="clipboard-check" class="w-20 h-20 mb-4 opacity-10"></i>
+                    <p class="font-bold uppercase tracking-widest text-sm">Bereit für den Plan?</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- DATA STATE ---
+        let weather = { temp: 0, rain: 0, wind: 0, solar: 0 };
+        let tides = { high: "", low: "", current: "" };
+
+        // --- INITIALISIERUNG ---
+        window.onload = () => {
+            updateAllData();
+            addKid(); // Erstes Kind-Feld
+            lucide.createIcons();
+        };
+
+        // --- WETTER & GEZEITEN API (Open-Meteo) ---
+        async function updateAllData() {
+            const lat = 53.54; // Bremerhaven
+            const lon = 8.58;
+
+            try {
+                // 1. Wetter & Strahlung
+                const wUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,wind_speed_10m,shortwave_radiation&hourly=precipitation_probability&timezone=auto`;
+                const wRes = await fetch(wUrl);
+                const wData = await wRes.json();
+
+                weather = {
+                    temp: wData.current.temperature_2m,
+                    rain: wData.hourly.precipitation_probability[0],
+                    wind: wData.current.wind_speed_10m,
+                    solar: wData.current.shortwave_radiation
+                };
+
+                // 2. Gezeiten (Marine API)
+                const tUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=tide_height&timezone=auto`;
+                const tRes = await fetch(tUrl);
+                const tData = await tRes.json();
+                
+                processTides(tData.hourly);
+                updateUI();
+            } catch (err) {
+                console.error("Fehler beim Laden der APIs:", err);
+            }
         }
 
-        generatePlan(decision, temp >= 30);
-        return decision;
-    }
+        function processTides(hourly) {
+            const now = new Date();
+            const times = hourly.time;
+            const heights = hourly.tide_height;
+            
+            let lastH = heights[0];
+            let trends = [];
 
-    // Zeitberechnung
-    function addMinutes(timeStr, mins) {
-        const [h, m] = timeStr.split(':').map(Number);
-        const date = new Date();
-        date.setHours(h, m + mins);
-        return date.getHours().toString().padStart(2, '0') + ":" + 
-               date.getMinutes().toString().padStart(2, '0');
-    }
+            // Finde Hoch- und Niedrigwasser durch Kurvenanalyse
+            for(let i=1; i<24; i++) {
+                if(heights[i] > heights[i-1] && heights[i] > heights[i+1]) trends.push({t: times[i], type: 'HW'});
+                if(heights[i] < heights[i-1] && heights[i] < heights[i+1]) trends.push({t: times[i], type: 'NW'});
+            }
 
-    // Plan Generierung
-    function generatePlan(mode = 'wasser', isHot = false) {
-        const startTime = document.getElementById('start-time').value;
-        const planBody = document.getElementById('plan-body');
-        const badge = document.getElementById('training-type-badge');
-        planBody.innerHTML = '';
-
-        let structure = [];
-        if (mode === 'wasser') {
-            badge.innerText = "🌊 Modus: Wassertraining";
-            badge.style.color = "var(--primary)";
-            structure = [
-                { title: "Begrüßung & Bootseinteilung", dur: 10 },
-                { title: "Erwärmung & Dehnen", dur: 10 },
-                { title: "Boote zu Wasser lassen", dur: 10 },
-                { title: isHot ? "Technik & Rudern (inkl. Trinkpausen)" : "Technik & Ausdauer", dur: 40 },
-                { title: "Anlegen & Boote reinigen", dur: 10 },
-                { title: "Abschlussbesprechung", dur: 10 }
-            ];
-        } else {
-            badge.innerText = "🏠 Modus: Hallentraining";
-            badge.style.color = "var(--danger)";
-            structure = [
-                { title: "Begrüßung & Umziehen", dur: 5 },
-                { title: "Laufspiel / Aufwärmen", dur: 15 },
-                { title: "Kraft & Koordination (Zirkel)", dur: 30 },
-                { title: "Ergometer-Wettkampf", dur: 20 },
-                { title: "Abschlussspiel", dur: 15 },
-                { title: "Feedbackrunde", dur: 5 }
-            ];
+            const nextTide = trends.find(tr => new Date(tr.t) > now);
+            if(nextTide) {
+                const timeStr = new Date(nextTide.t).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+                tides.current = `${nextTide.type} um ${timeStr}`;
+            }
         }
 
-        let currentTime = startTime;
-        structure.forEach(item => {
-            const row = `<tr>
-                <td>${currentTime}</td>
-                <td>${item.dur} Min</td>
-                <td>${item.title}</td>
-            </tr>`;
-            planBody.innerHTML += row;
-            currentTime = addMinutes(currentTime, item.dur);
-        });
-    }
+        function updateUI() {
+            document.getElementById('data-temp').innerHTML = `${weather.temp}°C <span class="text-xs font-normal opacity-70">(${weather.rain}%)</span>`;
+            document.getElementById('data-wind').innerText = `${weather.wind} km/h`;
+            document.getElementById('data-solar').innerText = `${weather.solar} W/m²`;
+            document.getElementById('data-tide').innerText = tides.current;
+        }
 
-    // Kinder-Verwaltung
-    function renderKids() {
-        const list = document.getElementById('kids-list');
-        list.innerHTML = '';
-        kids.forEach((kid, index) => {
-            list.innerHTML += `
-                <div class="kid-item">
-                    <span>${kid.name}</span>
-                    <div>
-                        <select onchange="updateKidStatus(${index}, this.value)">
-                            <option value="wasser" ${kid.status === 'wasser' ? 'selected' : ''}>Wasser OK</option>
-                            <option value="halle" ${kid.status === 'halle' ? 'selected' : ''}>Nur Halle</option>
+        // --- KINDER VERWALTUNG ---
+        function addKid() {
+            const container = document.getElementById('kids-list');
+            const id = Date.now();
+            const html = `
+                <div id="kid-${id}" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl relative fade-in">
+                    <button onclick="document.getElementById('kid-${id}').remove()" class="absolute top-2 right-2 text-slate-300 hover:text-red-500"><i data-lucide="x-circle" class="w-4 h-4"></i></button>
+                    <input type="text" placeholder="Name" class="kid-name w-full bg-transparent border-b border-slate-300 font-bold text-sm mb-3 outline-none focus:border-sky-500">
+                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <select class="kid-exp p-2 rounded-lg border bg-white">
+                            <option value="0">Keine Erfahrung</option>
+                            <option value="1">Wenig Erfahrung</option>
+                            <option value="2">Profi</option>
                         </select>
-                        <button onclick="removeKid(${index})" style="background:var(--danger); padding: 5px 10px; margin-left:10px;">X</button>
+                        <select class="kid-loc p-2 rounded-lg border bg-white">
+                            <option value="Wasser">Wasser</option>
+                            <option value="Halle">Halle</option>
+                        </select>
                     </div>
                 </div>
             `;
-        });
-        localStorage.setItem('rowKids', JSON.stringify(kids));
-    }
-
-    function addKid() {
-        const input = document.getElementById('new-kid-name');
-        if (input.value) {
-            kids.push({name: input.value, status: "wasser"});
-            input.value = '';
-            renderKids();
+            container.insertAdjacentHTML('beforeend', html);
+            lucide.createIcons();
         }
-    }
 
-    function removeKid(index) {
-        kids.splice(index, 1);
-        renderKids();
-    }
+        // --- PLAN GENERIERUNG ---
+        function generatePlan() {
+            const kids = Array.from(document.querySelectorAll('#kids-list > div')).map(el => ({
+                name: el.querySelector('.kid-name').value || "Kind",
+                exp: el.querySelector('.kid-exp').value,
+                loc: el.querySelector('.kid-loc').value
+            }));
 
-    function updateKidStatus(index, val) {
-        kids[index].status = val;
-        renderKids();
-    }
+            document.getElementById('placeholder').classList.add('hidden');
+            const output = document.getElementById('plan-output');
+            output.classList.remove('hidden');
 
-    // Wettkampf-Logik
-    function updateRaceInfo() {
-        const raceDate = new Date(document.getElementById('race-date').value);
-        const today = new Date();
-        const diffTime = raceDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        const info = document.getElementById('race-countdown');
-        if (diffDays > 0) {
-            info.innerText = `⏳ Noch ${diffDays} Tage bis zum Wettkampf! (Intensität: ${diffDays < 7 ? 'Hoch' : 'Normal'})`;
-        } else {
-            info.innerText = "";
+            const raceDate = document.getElementById('race-date').value;
+            let intensity = "Technik & Spaß";
+            if(raceDate) {
+                const diff = (new Date(raceDate) - new Date()) / (1000*60*60*24);
+                if(diff < 14) intensity = "Wettkampf-Power (Hohe Frequenz)";
+            }
+
+            // Sicherheits-Check
+            let warning = "";
+            if(weather.wind > 25) warning = "⚠️ ZU VIEL WIND: Alle Kinder in die Halle!";
+            else if(weather.rain > 70) warning = "⚠️ REGENRISIKO HOCH: Wechselkleidung & Halle prüfen!";
+
+            let html = `
+                <div class="space-y-8">
+                    <div class="border-b-4 border-sky-600 pb-6 flex justify-between items-end">
+                        <div>
+                            <h2 class="text-4xl font-black text-slate-800 uppercase tracking-tighter">Trainingsplan</h2>
+                            <p class="text-slate-500 font-bold uppercase text-xs">${new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'})}</p>
+                        </div>
+                        <div class="text-right text-[10px] font-bold text-slate-400">
+                            WIND: ${weather.wind} km/h | SONNE: ${weather.solar} W/m²<br>
+                            TIDE: ${tides.current}
+                        </div>
+                    </div>
+
+                    ${warning ? `<div class="bg-red-50 border-2 border-red-200 p-4 rounded-2xl text-red-700 font-black text-center animate-pulse">${warning}</div>` : ''}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-sky-600 font-black uppercase text-xs mb-4 tracking-widest flex items-center gap-2">
+                                <i data-lucide="timer" class="w-4 h-4"></i> Phase 1: Warmup (20 Min)
+                            </h3>
+                            <div class="bg-slate-50 p-5 rounded-3xl text-sm space-y-3 shadow-inner">
+                                <p>• <strong>Laufen:</strong> 10 Min lockeres Traben um das Hafenbecken.</p>
+                                <p>• <strong>Gymnastik:</strong> Fokus auf Schulterkreisen und Hüftmobilisation.</p>
+                                <p>• <strong>Spezifisch:</strong> 3 x 20 Sek. Plank (Rumpfspannung).</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-sky-600 font-black uppercase text-xs mb-4 tracking-widest flex items-center gap-2">
+                                <i data-lucide="users" class="w-4 h-4"></i> Mannschaft & Einteilung
+                            </h3>
+                            <div class="grid grid-cols-1 gap-2">
+                                ${kids.map(k => `
+                                    <div class="flex justify-between items-center bg-white border p-3 rounded-xl text-xs shadow-sm">
+                                        <span class="font-black">${k.name}</span>
+                                        <span class="px-3 py-1 bg-slate-100 rounded-full font-bold text-slate-500 text-[9px] uppercase">${k.loc}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-sky-600 font-black uppercase text-xs mb-4 tracking-widest">Phase 2: Hauptteil (50 Min) - ${intensity}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="p-6 bg-sky-600 text-white rounded-3xl shadow-lg">
+                                <h4 class="font-bold mb-2 flex items-center gap-2 text-sm italic">Wassertraining (Weser)</h4>
+                                <ul class="text-xs space-y-2 opacity-90">
+                                    <li>• Fokus: Blattaustauchen am Ende des Zugs.</li>
+                                    <li>• Übung: 4x500m mit 2 Min Pause.</li>
+                                    <li>• Beachte: Strömung beachten (${tides.current})!</li>
+                                </ul>
+                            </div>
+                            <div class="p-6 bg-slate-800 text-white rounded-3xl shadow-lg">
+                                <h4 class="font-bold mb-2 flex items-center gap-2 text-sm italic">Hallentraining (Ergo)</h4>
+                                <ul class="text-xs space-y-2 opacity-90">
+                                    <li>• 2x15 Min Steady State (SF 18-20).</li>
+                                    <li>• Technik-Pause: 5 Min Dehnung Unterarm.</li>
+                                    <li>• Abschluss: Kraftzirkel (Beinpresse simulieren).</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="text-emerald-800 font-black uppercase text-[10px]">Phase 3: Cool-down (20 Min)</h4>
+                            <p class="text-xs text-emerald-600">Materialpflege, Boote säubern, 5 Min statisches Dehnen.</p>
+                        </div>
+                        <i data-lucide="check-circle" class="w-8 h-8 text-emerald-300"></i>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('render-area').innerHTML = html;
+            lucide.createIcons();
+            output.scrollIntoView({behavior:'smooth'});
         }
-    }
 
-    // Timer
-    function startTimer() {
-        if (timerInterval) return;
-        timerInterval = setInterval(() => {
-            seconds++;
-            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer-val').innerText = `${mins}:${secs}`;
-        }, 1000);
-    }
-
-    function stopTimer() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-    }
-
-    function resetTimer() {
-        stopTimer();
-        seconds = 0;
-        document.getElementById('timer-val').innerText = "00:00";
-    }
-
-    // Export
-    function downloadPlan() {
-        const startTime = document.getElementById('start-time').value;
-        const type = document.getElementById('training-type-badge').innerText;
-        let content = `TRAININGSPLAN\nDatum: ${new Date().toLocaleDateString()}\nStart: ${startTime}\n${type}\n\nPLAN:\n`;
-        
-        const rows = document.querySelectorAll('#plan-table tr');
-        rows.forEach(row => {
-            const cols = row.querySelectorAll('td, th');
-            content += Array.from(cols).map(c => c.innerText).join(" | ") + "\n";
-        });
-
-        content += "\nTEILNEHMER:\n";
-        kids.forEach(k => content += `- ${k.name} (${k.status})\n`);
-
-        const blob = new Blob([content], {type: 'text/plain'});
-        const anchor = document.createElement('a');
-        anchor.download = "trainingsplan.txt";
-        anchor.href = (window.URL || window.webkitURL).createObjectURL(blob);
-        anchor.click();
-    }
-
-    // Initialisierung
-    window.onload = () => {
-        analyzeWeather();
-        renderKids();
-    };
-</script>
-
+        function exportPDF() {
+            const element = document.getElementById('render-area');
+            const opt = {
+                margin: 15,
+                filename: `Rudertraining-Bremerhaven-${new Date().toISOString().slice(0,10)}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 3 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
 </body>
 </html>
